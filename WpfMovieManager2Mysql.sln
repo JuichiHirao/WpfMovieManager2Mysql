@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28606.126
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WpfMovieManager2Mysql", "WpfMovieManager2Mysql.csproj", "{FD6B366D-B77E-4547-9756-B0B4C1969062}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FD6B366D-B77E-4547-9756-B0B4C1969062}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD6B366D-B77E-4547-9756-B0B4C1969062}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD6B366D-B77E-4547-9756-B0B4C1969062}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD6B366D-B77E-4547-9756-B0B4C1969062}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {83C9F52B-AB16-4035-94F2-849D358E0395}
+	EndGlobalSection
+EndGlobal
