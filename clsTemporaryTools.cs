@@ -5,12 +5,14 @@ using System.Diagnostics;
 using System.Linq;
 using System.IO;
 using System.Text.RegularExpressions;
+using WpfMovieManager2Mysql;
+using MySql.Data.MySqlClient;
 
 namespace wpfMovieManager2Mysql
 {
     class TemporaryTools
     {
-        DbConnection dbcon = new DbConnection();
+        MySqlDbConnection dbcon = new MySqlDbConnection();
 
         public void DbExportGroupFromSiteStore()
         {
@@ -122,18 +124,18 @@ namespace wpfMovieManager2Mysql
                                 + "  ) AS TAGLIST "
                                 + "  ORDER BY TAG ";
 
-            SqlCommand command = new SqlCommand(queryString, dbcon.getSqlConnection());
+            MySqlCommand command = new MySqlCommand(queryString, dbcon.getMySqlConnection());
 
             dbcon.openConnection();
 
-            SqlDataReader reader = command.ExecuteReader();
+            MySqlDataReader reader = command.ExecuteReader();
 
             List<string> listTag = new List<string>();
             do
             {
                 while (reader.Read())
                 {
-                    string tagName = DbExportCommon.GetDbString(reader, 0);
+                    string tagName = MySqlDbExportCommon.GetDbString(reader, 0);
 
                     if (tagName.Length > 0)
                         listTag.Add(tagName);

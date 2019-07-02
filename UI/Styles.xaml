@@ -22,7 +22,7 @@
     <XmlDataProvider x:Key="formctrlSortSetting" >
         <x:XData>
             <Kind xmlns="">
-                <KindData DbValue="CreateDate" DisplayName="Default（登録日）" />
+                <KindData DbValue="CreatedAt" DisplayName="Default（登録日）" />
                 <KindData DbValue="SellDate" DisplayName="発売日" />
                 <KindData DbValue="FileDate" DisplayName="ファイル日付" />
                 <KindData DbValue="Rating" DisplayName="Rating" />
@@ -43,7 +43,7 @@
     <XmlDataProvider x:Key="formctrlSortGroupSetting" >
         <x:XData>
             <Kind xmlns="">
-                <KindData DbValue="CreateDate" DisplayName="Default（登録日）" />
+                <KindData DbValue="CreatedAt" DisplayName="Default（登録日）" />
                 <KindData DbValue="Name" DisplayName="Name" />
             </Kind>
         </x:XData>

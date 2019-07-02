@@ -18,6 +18,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Data;
 using System.Text.RegularExpressions;
 using System.Text;
+using WpfMovieManager2Mysql;
 
 namespace wpfMovieManager2Mysql
 {
@@ -38,7 +39,7 @@ namespace wpfMovieManager2Mysql
 
         Player Player;
 
-        DbConnection dbcon;
+        MySqlDbConnection dbcon;
 
         common.Image image = null;
 
@@ -70,7 +71,7 @@ namespace wpfMovieManager2Mysql
 
             InitializeComponent();
 
-            dbcon = new DbConnection();
+            dbcon = new MySqlDbConnection();
             Player = new Player();
 
             bgworkerFileDetailCopy = new BackgroundWorker();
@@ -370,7 +371,7 @@ namespace wpfMovieManager2Mysql
             string sortColumns = Convert.ToString(cmbContentsSort.SelectedValue);
             ColViewMovieContents.SetSort(sortColumns, GetSortOrder(btnSortOrder, false));
 
-            ColViewMovieGroup.SetSort("UpdateDate", ListSortDirection.Descending);
+            ColViewMovieGroup.SetSort("UpdatedDate", ListSortDirection.Descending);
             ColViewMovieGroup.SetFilterKind(kind);
             if (dispinfoGroupButton != "S")
                 ColViewMovieGroup.SetSiteName("");
@@ -553,6 +554,7 @@ namespace wpfMovieManager2Mysql
         private void dgridMovieContents_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             dispinfoSelectContents = (MovieContents)dgridMovieContents.SelectedItem;
+
             image = null;
 
             if (dispinfoSelectContents != null)
@@ -562,6 +564,13 @@ namespace wpfMovieManager2Mysql
             }
             else
                 return;
+
+            MovieGroup matchGroup = ColViewMovieGroup.GetMatchDataByContents(dispinfoSelectContents);
+            if (matchGroup != null)
+            {
+                //dispinfoSelectContents.Label = System.IO.Path.Combine(matchGroup.Path, dispinfoSelectContents.Name);
+                dispinfoSelectContents.Label = matchGroup.Path;
+            }
 
             if (dispinfoSelectContents.Name.IndexOf("?") >= 0)
             {
@@ -1480,8 +1489,8 @@ namespace wpfMovieManager2Mysql
             txtFileDetailContentsExtension.Text = dispinfoSelectContents.Extension;
             txtFileDetailContentsFileDate.Text = dispinfoSelectContents.FileDate.ToString("yyyy/MM/dd HH:mm:ss");
             txtFileDetailContentsFileCount.Text = Convert.ToString(dispinfoSelectContents.FileCount);
-            txtFileDetailContentsCreateDate.Text = dispinfoSelectContents.CreateDate.ToString("yyyy/MM/dd HH:mm:ss");
-            txtFileDetailContentsUpdateDate.Text = dispinfoSelectContents.UpdateDate.ToString("yyyy/MM/dd HH:mm:ss");
+            txtFileDetailContentsCreateDate.Text = dispinfoSelectContents.CreatedAt.ToString("yyyy/MM/dd HH:mm:ss");
+            txtFileDetailContentsUpdateDate.Text = dispinfoSelectContents.UpdatedAt.ToString("yyyy/MM/dd HH:mm:ss");
         }
 
         private void btnFileDetailDelete_Click(object sender, RoutedEventArgs e)

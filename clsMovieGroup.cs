@@ -11,6 +11,9 @@ using System.Windows.Data;
 using System.Collections;
 using System.Text.RegularExpressions;
 using System.IO;
+using WpfMovieManager2Mysql;
+using MySql.Data.MySqlClient;
+using System.Diagnostics;
 
 namespace wpfMovieManager2Mysql
 {
@@ -49,7 +52,7 @@ namespace wpfMovieManager2Mysql
             tools.DbUpdateDir(listMovieGroup);
         }
 
-        DbConnection dbcon;
+        MySqlDbConnection dbcon;
         List<MovieGroup> listMovieGroup;
         //public ICollectionView ColViewListMovieGroup;
         public ListCollectionView ColViewListMovieGroup;
@@ -64,7 +67,7 @@ namespace wpfMovieManager2Mysql
 
         string FilterSearchText = "";
 
-        public MovieGroupFilterAndSorts(DbConnection myDbCon)
+        public MovieGroupFilterAndSorts(MySqlDbConnection myDbCon)
         {
             dbcon = myDbCon;
 
@@ -73,64 +76,17 @@ namespace wpfMovieManager2Mysql
 
         public MovieGroupFilterAndSorts()
         {
-            dbcon = new DbConnection();
+            dbcon = new MySqlDbConnection();
 
             DataSet();
         }
 
         public MovieGroup GetMatchDataByContents(MovieContents myContents)
         {
-            bool IsSite = (myContents.Kind == MovieContents.KIND_SITE);
-            bool IsFile = (myContents.Kind == MovieContents.KIND_FILE);
-            //bool IsContentsSite = (myContents.Kind == MovieContents.KIND_CONTENTS && myContents.SiteName != null && myContents.SiteName.Length > 0);
-            //bool IsContentsFile = (myContents.Kind == MovieContents.KIND_CONTENTS && (myContents.SiteName == null || myContents.SiteName.Length <= 0));
-
-            Regex regex = null;
-            if (IsSite)
-            {
-                regex = new Regex(".*" + Regex.Escape(myContents.Label) + "$", RegexOptions.IgnoreCase);
-            }
-
             foreach (MovieGroup data in listMovieGroup)
             {
-                if (IsSite)// || IsContentsSite)
-                {
-                    if (data.Kind != MovieGroup.KIND_SITE)
-                        continue;
-                }
-                else if (IsFile)
-                {
-                    if (data.Kind != MovieGroup.KIND_DIR)
-                        continue;
-                }
-
-                if (IsSite)
-                {
-                    if (data.Label.ToUpper() == myContents.SiteName.ToUpper() && regex.IsMatch(data.Explanation))
-                        return data;
-
-                    continue;
-                }
-                else if (IsFile)
-                {
-                    if (data.Explanation.Length > 0 && data.Explanation.ToUpper() == myContents.Label.ToUpper())
-                        return data;
-
-                    continue;
-                }
-                else //if (IsContentsSite)
-                {
-                    if (data.Label.ToUpper() == myContents.SiteName.ToUpper())
-                    {
-                        if (Directory.Exists(Path.Combine(data.Explanation, myContents.Name)))
-                            return data;
-                    }
-
-                    if (File.Exists(Path.Combine(data.Explanation, myContents.Name)))
-                        return data;
-
-                    continue;
-                }
+                if (data.Label == myContents.StoreLabel)
+                    return data;
             }
 
             return null;
@@ -143,15 +99,16 @@ namespace wpfMovieManager2Mysql
             ColViewListMovieGroup = (ListCollectionView)CollectionViewSource.GetDefaultView(listMovieGroup);
 
             ColViewListMovieGroup.SortDescriptions.Clear();
-            ColViewListMovieGroup.SortDescriptions.Add(new SortDescription("UpdateDate", ListSortDirection.Descending));
+            ColViewListMovieGroup.SortDescriptions.Add(new SortDescription("UpdatedDate", ListSortDirection.Descending));
 
             listSiteName = GetDistinctSiteName();
         }
+
         public void Add(MovieGroup myData)
         {
             listMovieGroup.Add(myData);
         }
-        public void DbDelete(MovieGroup myData, DbConnection myDbCon)
+        public void DbDelete(MovieGroup myData, MySqlDbConnection myDbCon)
         {
             ColViewListMovieGroup.Remove(myData);
             MovieGroups.DbDelete(myData, myDbCon);
@@ -188,7 +145,7 @@ namespace wpfMovieManager2Mysql
         {
             if (mySortItem == null)
             {
-                sortItem = "CreateDate";
+                sortItem = "CreatedAt";
                 sortOrder = ListSortDirection.Descending;
                 return;
             }
@@ -282,26 +239,26 @@ namespace wpfMovieManager2Mysql
 
         private static Logger _logger = LogManager.GetCurrentClassLogger();
 
-        public static MovieGroup DbExport(MovieGroup myMovieGroup, DbConnection myDbCon)
+        public static MovieGroup DbExport(MovieGroup myMovieGroup, MySqlDbConnection myDbCon)
         {
             if (myDbCon == null)
-                myDbCon = new DbConnection();
+                myDbCon = new MySqlDbConnection();
 
             myDbCon.openConnection();
             string querySting = "INSERT INTO MOVIE_GROUP( NAME, LABEL, EXPLANATION, KIND ) VALUES ( @pName, @pLabel, @pExplanation, @pKind ) ";
 
-            SqlParameter[] sqlparams = new SqlParameter[4];
+            MySqlParameter[] sqlparams = new MySqlParameter[4];
             // Create and append the parameters for the Update command.
-            sqlparams[0] = new SqlParameter("@pName", SqlDbType.VarChar);
+            sqlparams[0] = new MySqlParameter("@pName", SqlDbType.VarChar);
             sqlparams[0].Value = myMovieGroup.Name;
 
-            sqlparams[1] = new SqlParameter("@pLabel", SqlDbType.VarChar);
+            sqlparams[1] = new MySqlParameter("@pLabel", SqlDbType.VarChar);
             sqlparams[1].Value = myMovieGroup.Label;
 
-            sqlparams[2] = new SqlParameter("@pExplanation", SqlDbType.VarChar);
+            sqlparams[2] = new MySqlParameter("@pExplanation", SqlDbType.VarChar);
             sqlparams[2].Value = myMovieGroup.Explanation;
 
-            sqlparams[3] = new SqlParameter("@pKind", SqlDbType.Int);
+            sqlparams[3] = new MySqlParameter("@pKind", SqlDbType.Int);
             sqlparams[3].Value = myMovieGroup.Kind;
 
             myDbCon.SetParameter(sqlparams);
@@ -314,7 +271,7 @@ namespace wpfMovieManager2Mysql
                         + ""
                         + "";
 
-            SqlDataReader reader = null;
+            MySqlDataReader reader = null;
             MovieGroup data = null;
             try
             {
@@ -333,13 +290,13 @@ namespace wpfMovieManager2Mysql
                     {
                         data = new MovieGroup();
 
-                        data.Id = DbExportCommon.GetDbInt(reader, 0);
-                        data.Name = DbExportCommon.GetDbString(reader, 1);
-                        data.Label = DbExportCommon.GetDbString(reader, 2);
-                        data.Explanation = DbExportCommon.GetDbString(reader, 3);
-                        data.Kind = DbExportCommon.GetDbInt(reader, 4);
-                        data.CreateDate = DbExportCommon.GetDbDateTime(reader, 5);
-                        data.UpdateDate = DbExportCommon.GetDbDateTime(reader, 6);
+                        data.Id = MySqlDbExportCommon.GetDbInt(reader, 0);
+                        data.Name = MySqlDbExportCommon.GetDbString(reader, 1);
+                        data.Label = MySqlDbExportCommon.GetDbString(reader, 2);
+                        data.Explanation = MySqlDbExportCommon.GetDbString(reader, 3);
+                        data.Kind = MySqlDbExportCommon.GetDbInt(reader, 4);
+                        data.CreatedAt = MySqlDbExportCommon.GetDbDateTime(reader, 5);
+                        data.UpdatedAt = MySqlDbExportCommon.GetDbDateTime(reader, 6);
                     }
                 } while (reader.NextResult());
             }
@@ -350,21 +307,22 @@ namespace wpfMovieManager2Mysql
 
             return data;
         }
-        public static List<MovieGroup> GetDbData(DbConnection myDbCon)
+        public static List<MovieGroup> GetDbData(MySqlDbConnection myDbCon)
         {
             List<MovieGroup> listMovieGroup = new List<MovieGroup>();
 
             if (myDbCon == null)
-                myDbCon = new DbConnection();
+                myDbCon = new MySqlDbConnection();
 
             string queryString
-                        = "SELECT "
-                        + "    ID, NAME, LABEL, EXPLANATION, KIND, CREATE_DATE, UPDATE_DATE "
-                        + "  FROM MOVIE_GROUP "
-                        + ""
+                        = "SELECT id"
+                        + "    , label, name1, name2, path"
+                        + "    , remark "
+                        + "    , created_at, updated_at "
+                        + "  FROM store "
                         + "";
 
-            SqlDataReader reader = null;
+            MySqlDataReader reader = null;
             try
             {
                 reader = myDbCon.GetExecuteReader(queryString);
@@ -375,24 +333,29 @@ namespace wpfMovieManager2Mysql
                     if (reader.IsClosed)
                     {
                         _logger.Debug("reader.IsClosed");
-                        throw new Exception("MOVIE_SITESTOREの取得でreaderがクローズされています");
+                        throw new Exception("av.storeの取得でreaderがクローズされています");
                     }
 
                     while (reader.Read())
                     {
                         MovieGroup data = new MovieGroup();
 
-                        data.Id = DbExportCommon.GetDbInt(reader, 0);
-                        data.Name = DbExportCommon.GetDbString(reader, 1);
-                        data.Label = DbExportCommon.GetDbString(reader, 2);
-                        data.Explanation = DbExportCommon.GetDbString(reader, 3);
-                        data.Kind = DbExportCommon.GetDbInt(reader, 4);
-                        data.CreateDate = DbExportCommon.GetDbDateTime(reader, 5);
-                        data.UpdateDate = DbExportCommon.GetDbDateTime(reader, 6);
+                        data.Id = MySqlDbExportCommon.GetDbInt(reader, 0);
+                        data.Label = MySqlDbExportCommon.GetDbString(reader, 1);
+                        data.Name1 = MySqlDbExportCommon.GetDbString(reader, 2);
+                        data.Name2 = MySqlDbExportCommon.GetDbString(reader, 3);
+                        data.Path = MySqlDbExportCommon.GetDbString(reader, 4);
+                        data.Remark = MySqlDbExportCommon.GetDbString(reader, 5);
+                        data.CreatedAt = MySqlDbExportCommon.GetDbDateTime(reader, 6);
+                        data.UpdatedAt = MySqlDbExportCommon.GetDbDateTime(reader, 7);
 
                         listMovieGroup.Add(data);
                     }
                 } while (reader.NextResult());
+            }
+            catch(Exception ex)
+            {
+                Debug.Write(ex);
             }
             finally
             {
@@ -406,18 +369,18 @@ namespace wpfMovieManager2Mysql
             return listMovieGroup;
         }
 
-        public static void DbDelete(MovieGroup myData, DbConnection myDbCon)
+        public static void DbDelete(MovieGroup myData, MySqlDbConnection myDbCon)
         {
             if (myDbCon == null)
-                myDbCon = new DbConnection();
+                myDbCon = new MySqlDbConnection();
 
             myDbCon.openConnection();
 
             string querySting = "DELETE FROM MOVIE_GROUP WHERE ID = @pId ";
 
-            SqlParameter[] sqlparams = new SqlParameter[1];
+            MySqlParameter[] sqlparams = new MySqlParameter[1];
 
-            sqlparams[0] = new SqlParameter("@pId", SqlDbType.Int);
+            sqlparams[0] = new MySqlParameter("@pId", SqlDbType.Int);
             sqlparams[0].Value = myData.Id;
 
             myDbCon.SetParameter(sqlparams);
@@ -436,69 +399,79 @@ namespace wpfMovieManager2Mysql
 
         public MovieGroup()
         {
-            Name = "";
             Label = "";
+            Name1 = "";
+            Name2 = "";
             Explanation = "";
         }
         public int Id { get; set; }
+
         public string Name { get; set; }
+
+        public string Name1 { get; set; }
+        public string Name2 { get; set; }
+
+        public string Path { get; set; }
+
+        public string Remark { get; set; }
+
         public string Label { get; set; }
         public string Explanation {get; set; }
         public int Kind { get; set; }
-        public DateTime CreateDate { get; set; }
-        public DateTime UpdateDate { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
 
-        public void DbExport(DbConnection myDbCon)
+        public void DbExport(MySqlDbConnection myDbCon)
         {
             if (myDbCon == null)
-                myDbCon = new DbConnection();
+                myDbCon = new MySqlDbConnection();
 
             myDbCon.openConnection();
 
             string querySting = "INSERT INTO MOVIE_GROUP (NAME, LABEL, EXPLANATION, KIND) VALUES( @pName, @pLabel, @pExplanation, @pKind)";
 
-            SqlParameter[] sqlparams = new SqlParameter[4];
+            MySqlParameter[] sqlparams = new MySqlParameter[4];
 
-            sqlparams[0] = new SqlParameter("@pName", SqlDbType.VarChar);
+            sqlparams[0] = new MySqlParameter("@pName", SqlDbType.VarChar);
             sqlparams[0].Value = Name;
 
-            sqlparams[1] = new SqlParameter("@pLabel", SqlDbType.VarChar);
+            sqlparams[1] = new MySqlParameter("@pLabel", SqlDbType.VarChar);
             sqlparams[1].Value = Label;
 
-            sqlparams[2] = new SqlParameter("@pExplanation", SqlDbType.VarChar);
+            sqlparams[2] = new MySqlParameter("@pExplanation", SqlDbType.VarChar);
             sqlparams[2].Value = Explanation;
 
-            sqlparams[3] = new SqlParameter("@pKind", SqlDbType.Int);
+            sqlparams[3] = new MySqlParameter("@pKind", SqlDbType.Int);
             sqlparams[3].Value = Kind;
 
             myDbCon.SetParameter(sqlparams);
             myDbCon.execSqlCommand(querySting);
         }
-        public void DbUpdate(DbConnection myDbCon)
+        public void DbUpdate(MySqlDbConnection myDbCon)
         {
             if (myDbCon == null)
-                myDbCon = new DbConnection();
+                myDbCon = new MySqlDbConnection();
 
             myDbCon.openConnection();
 
             string querySting = "UPDATE MOVIE_GROUP SET NAME = @pName, LABEL = @pLabel, EXPLANATION = @pExplanation, KIND = @pKind WHERE ID = @pId ";
             //                  + " NAME ", LABEL, EXPLANATION, KIND ) VALUES ( @pName, @pLabel, @pExplanation, @pKind ) ";
 
-            SqlParameter[] sqlparams = new SqlParameter[5];
+            MySqlParameter[] sqlparams = new MySqlParameter[5];
 
-            sqlparams[0] = new SqlParameter("@pName", SqlDbType.VarChar);
+            sqlparams[0] = new MySqlParameter("@pName", SqlDbType.VarChar);
             sqlparams[0].Value = Name;
 
-            sqlparams[1] = new SqlParameter("@pLabel", SqlDbType.VarChar);
+            sqlparams[1] = new MySqlParameter("@pLabel", SqlDbType.VarChar);
             sqlparams[1].Value = Label;
 
-            sqlparams[2] = new SqlParameter("@pExplanation", SqlDbType.VarChar);
+            sqlparams[2] = new MySqlParameter("@pExplanation", SqlDbType.VarChar);
             sqlparams[2].Value = Explanation;
 
-            sqlparams[3] = new SqlParameter("@pKind", SqlDbType.Int);
+            sqlparams[3] = new MySqlParameter("@pKind", SqlDbType.Int);
             sqlparams[3].Value = Kind;
 
-            sqlparams[4] = new SqlParameter("@pId", SqlDbType.Int);
+            sqlparams[4] = new MySqlParameter("@pId", SqlDbType.Int);
             sqlparams[4].Value = Id;
 
             myDbCon.SetParameter(sqlparams);

@@ -9,6 +9,8 @@ using System.IO;
 using System.ComponentModel;
 using System.Text.RegularExpressions;
 using System.Windows.Media.Imaging;
+using WpfMovieManager2Mysql;
+using MySql.Data.MySqlClient;
 
 namespace wpfMovieManager2Mysql
 {
@@ -159,8 +161,8 @@ namespace wpfMovieManager2Mysql
 
             return null;
         }
-        public DateTime CreateDate { get; set; }
-        public DateTime UpdateDate { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
 
         public string ChildTableName { get; set; }
 
@@ -185,6 +187,8 @@ namespace wpfMovieManager2Mysql
         }
 
         public int Id { get; set; }
+
+        public string StoreLabel { get; set; }
 
         private string _Name;
         public string Name
@@ -297,6 +301,8 @@ namespace wpfMovieManager2Mysql
         }
 
         public string Remark { get; set; }
+
+        public string FileStatus { get; set; }
 
         public string ProductNumber { get; set; }   // KIND_2_MOVIE_SITECONTENTS
 
@@ -412,7 +418,7 @@ namespace wpfMovieManager2Mysql
             return;
         }
 
-        public void RefrectFileInfoAndDbUpdate(detail.FileDetail myFileDetail, DbConnection myDbCon)
+        public void RefrectFileInfoAndDbUpdate(detail.FileDetail myFileDetail, MySqlDbConnection myDbCon)
         {
             Size = myFileDetail.Size;
             FileDate = myFileDetail.FileDate;
@@ -424,7 +430,7 @@ namespace wpfMovieManager2Mysql
             return;
         }
 
-        public void DbUpdate(DbConnection myDbCon)
+        public void DbUpdate(MySqlDbConnection myDbCon)
         {
             int paramCnt = 0;
             int paramMax = 0;
@@ -445,48 +451,48 @@ namespace wpfMovieManager2Mysql
 
             sqlCommand += "WHERE ID = @pId ";
 
-            SqlCommand command = new SqlCommand();
+            MySqlCommand command = new MySqlCommand();
 
-            command = new SqlCommand(sqlCommand, myDbCon.getSqlConnection());
+            command = new MySqlCommand(sqlCommand, myDbCon.getMySqlConnection());
 
-            SqlParameter[] sqlparams = new SqlParameter[paramMax];
+            MySqlParameter[] sqlparams = new MySqlParameter[paramMax];
 
             paramCnt = 0;
-            sqlparams[paramCnt] = new SqlParameter("@pName", SqlDbType.VarChar);
+            sqlparams[paramCnt] = new MySqlParameter("@pName", SqlDbType.VarChar);
             sqlparams[paramCnt].Value = Name;
             paramCnt++;
 
-            sqlparams[paramCnt] = new SqlParameter("@pLabel", SqlDbType.VarChar);
+            sqlparams[paramCnt] = new MySqlParameter("@pLabel", SqlDbType.VarChar);
             sqlparams[paramCnt].Value = Label;
             paramCnt++;
 
-            sqlparams[paramCnt] = new SqlParameter("@pTag", SqlDbType.VarChar);
+            sqlparams[paramCnt] = new MySqlParameter("@pTag", SqlDbType.VarChar);
             if (Tag == null || Tag.Length <= 0)
                 sqlparams[paramCnt].Value = DBNull.Value;
             else
                 sqlparams[paramCnt].Value = Tag;
             paramCnt++;
 
-            sqlparams[paramCnt] = new SqlParameter("@pExtension", SqlDbType.VarChar);
+            sqlparams[paramCnt] = new MySqlParameter("@pExtension", SqlDbType.VarChar);
             sqlparams[paramCnt].Value = Extension;
             paramCnt++;
 
             if (this.Kind == MovieContents.KIND_FILE)
             {
-                sqlparams[paramCnt] = new SqlParameter("@pProductNumber", SqlDbType.VarChar);
+                sqlparams[paramCnt] = new MySqlParameter("@pProductNumber", SqlDbType.VarChar);
                 sqlparams[paramCnt].Value = ProductNumber;
                 paramCnt++;
 
-                sqlparams[paramCnt] = new SqlParameter("@pSellDate", SqlDbType.Date);
+                sqlparams[paramCnt] = new MySqlParameter("@pSellDate", SqlDbType.Date);
                 sqlparams[paramCnt].Value = SellDate;
                 paramCnt++;
 
-                sqlparams[paramCnt] = new SqlParameter("@pFileDate", SqlDbType.Date);
+                sqlparams[paramCnt] = new MySqlParameter("@pFileDate", SqlDbType.Date);
                 sqlparams[paramCnt].Value = FileDate;
                 paramCnt++;
             }
 
-            sqlparams[paramCnt] = new SqlParameter("@pId", SqlDbType.Int);
+            sqlparams[paramCnt] = new MySqlParameter("@pId", SqlDbType.Int);
             sqlparams[paramCnt].Value = Id;
 
             myDbCon.SetParameter(sqlparams);
@@ -495,22 +501,22 @@ namespace wpfMovieManager2Mysql
             return;
         }
 
-        public void DbUpdateTag(string myTag, DbConnection myDbCon)
+        public void DbUpdateTag(string myTag, MySqlDbConnection myDbCon)
         {
             string sqlCommand = "UPDATE " + GetTableName() + " ";
             sqlCommand += "SET TAG = @pTag ";
             sqlCommand += "WHERE ID = @pId ";
 
-            SqlCommand command = new SqlCommand();
+            MySqlCommand command = new MySqlCommand();
 
-            command = new SqlCommand(sqlCommand, myDbCon.getSqlConnection());
+            command = new MySqlCommand(sqlCommand, myDbCon.getMySqlConnection());
 
-            SqlParameter[] sqlparams = new SqlParameter[2];
+            MySqlParameter[] sqlparams = new MySqlParameter[2];
 
-            sqlparams[0] = new SqlParameter("@pTag", SqlDbType.VarChar);
+            sqlparams[0] = new MySqlParameter("@pTag", SqlDbType.VarChar);
             sqlparams[0].Value = myTag;
 
-            sqlparams[1] = new SqlParameter("@pId", SqlDbType.Int);
+            sqlparams[1] = new MySqlParameter("@pId", SqlDbType.Int);
             sqlparams[1].Value = Id;
 
             myDbCon.SetParameter(sqlparams);
@@ -519,22 +525,22 @@ namespace wpfMovieManager2Mysql
             this.Tag = myTag;
         }
 
-        public void DbUpdateComment(string myComment, DbConnection myDbCon)
+        public void DbUpdateComment(string myComment, MySqlDbConnection myDbCon)
         {
             string sqlCommand = "UPDATE " + GetTableName() + " ";
             sqlCommand += "SET COMMENT = @pComment ";
             sqlCommand += "WHERE ID = @pId ";
 
-            SqlCommand command = new SqlCommand();
+            MySqlCommand command = new MySqlCommand();
 
-            command = new SqlCommand(sqlCommand, myDbCon.getSqlConnection());
+            command = new MySqlCommand(sqlCommand, myDbCon.getMySqlConnection());
 
-            SqlParameter[] sqlparams = new SqlParameter[2];
+            MySqlParameter[] sqlparams = new MySqlParameter[2];
 
-            sqlparams[0] = new SqlParameter("@pComment", SqlDbType.VarChar);
+            sqlparams[0] = new MySqlParameter("@pComment", SqlDbType.VarChar);
             sqlparams[0].Value = myComment;
 
-            sqlparams[1] = new SqlParameter("@pId", SqlDbType.Int);
+            sqlparams[1] = new MySqlParameter("@pId", SqlDbType.Int);
             sqlparams[1].Value = Id;
 
             myDbCon.SetParameter(sqlparams);
@@ -546,22 +552,22 @@ namespace wpfMovieManager2Mysql
 
         }
 
-        public void DbUpdateName(string myName, DbConnection myDbCon)
+        public void DbUpdateName(string myName, MySqlDbConnection myDbCon)
         {
             string sqlCommand = "UPDATE " + GetTableName() + " ";
             sqlCommand += "SET NAME = @pName ";
             sqlCommand += "WHERE ID = @pId ";
 
-            SqlCommand command = new SqlCommand();
+            MySqlCommand command = new MySqlCommand();
 
-            command = new SqlCommand(sqlCommand, myDbCon.getSqlConnection());
+            command = new MySqlCommand(sqlCommand, myDbCon.getMySqlConnection());
 
-            SqlParameter[] sqlparams = new SqlParameter[2];
+            MySqlParameter[] sqlparams = new MySqlParameter[2];
 
-            sqlparams[0] = new SqlParameter("@pName", SqlDbType.VarChar);
+            sqlparams[0] = new MySqlParameter("@pName", SqlDbType.VarChar);
             sqlparams[0].Value = myName;
 
-            sqlparams[1] = new SqlParameter("@pId", SqlDbType.Int);
+            sqlparams[1] = new MySqlParameter("@pId", SqlDbType.Int);
             sqlparams[1].Value = Id;
 
             myDbCon.SetParameter(sqlparams);
@@ -584,22 +590,22 @@ namespace wpfMovieManager2Mysql
             else
                 return MovieContents.TABLE_KIND_MOVIE_CONTENTS;
         }
-        public void DbUpdateRating(int myRating, DbConnection myDbCon)
+        public void DbUpdateRating(int myRating, MySqlDbConnection myDbCon)
         {
             string sqlCommand = "UPDATE " + GetTableName() + " ";
             sqlCommand += "SET RATING = @pRating ";
             sqlCommand += "WHERE ID = @pId ";
 
-            SqlCommand command = new SqlCommand();
+            MySqlCommand command = new MySqlCommand();
 
-            command = new SqlCommand(sqlCommand, myDbCon.getSqlConnection());
+            command = new MySqlCommand(sqlCommand, myDbCon.getMySqlConnection());
 
-            SqlParameter[] sqlparams = new SqlParameter[2];
+            MySqlParameter[] sqlparams = new MySqlParameter[2];
 
-            sqlparams[0] = new SqlParameter("@pRating", SqlDbType.Int);
+            sqlparams[0] = new MySqlParameter("@pRating", MySqlDbType.Int32);
             sqlparams[0].Value = myRating;
 
-            sqlparams[1] = new SqlParameter("@pId", SqlDbType.Int);
+            sqlparams[1] = new MySqlParameter("@pId", MySqlDbType.Int32);
             sqlparams[1].Value = Id;
 
             myDbCon.SetParameter(sqlparams);
@@ -611,18 +617,18 @@ namespace wpfMovieManager2Mysql
             Rating = myRating;
         }
 
-        public void DbDelete(DbConnection myDbCon)
+        public void DbDelete(MySqlDbConnection myDbCon)
         {
             string sqlCommand = "DELETE FROM " + GetTableName() + " ";
             sqlCommand += "WHERE ID = @pId ";
 
-            SqlCommand command = new SqlCommand();
+            MySqlCommand command = new MySqlCommand();
 
-            command = new SqlCommand(sqlCommand, myDbCon.getSqlConnection());
+            command = new MySqlCommand(sqlCommand, myDbCon.getMySqlConnection());
 
-            SqlParameter[] sqlparams = new SqlParameter[1];
+            MySqlParameter[] sqlparams = new MySqlParameter[1];
 
-            sqlparams[0] = new SqlParameter("@pId", SqlDbType.Int);
+            sqlparams[0] = new MySqlParameter("@pId", MySqlDbType.Int32);
             sqlparams[0].Value = Id;
 
             myDbCon.SetParameter(sqlparams);
@@ -634,40 +640,40 @@ namespace wpfMovieManager2Mysql
             string dir = Path.Combine(myGroup.Explanation, Label);
         }
 
-        public void DbExportSiteContents(DbConnection myDbCon)
+        public void DbExportSiteContents(MySqlDbConnection myDbCon)
         {
             string sqlCommand = "INSERT INTO " + GetTableName();
             sqlCommand += "( SITE_NAME, NAME, PARENT_PATH, MOVIE_NEWDATE, MOVIE_COUNT, PHOTO_COUNT, EXTENSION ) ";
             sqlCommand += "VALUES( @pSiteName, @pName, @pParentPath, @pMovieNewDate, @pMovieCount, @pPhotoCount, @pExtension )";
 
-            SqlCommand command = new SqlCommand();
+            MySqlCommand command = new MySqlCommand();
 
-            command = new SqlCommand(sqlCommand, myDbCon.getSqlConnection());
+            command = new MySqlCommand(sqlCommand, myDbCon.getMySqlConnection());
 
-            SqlParameter[] sqlparams = new SqlParameter[7];
+            MySqlParameter[] sqlparams = new MySqlParameter[7];
             // Create and append the parameters for the Update command.
-            sqlparams[0] = new SqlParameter("@pSiteName", SqlDbType.VarChar);
+            sqlparams[0] = new MySqlParameter("@pSiteName", MySqlDbType.VarChar);
             sqlparams[0].Value = SiteName;
 
-            sqlparams[1] = new SqlParameter("@pName", SqlDbType.VarChar);
+            sqlparams[1] = new MySqlParameter("@pName", MySqlDbType.VarChar);
             sqlparams[1].Value = Name;
 
-            sqlparams[2] = new SqlParameter("@pParentPath", SqlDbType.VarChar);
+            sqlparams[2] = new MySqlParameter("@pParentPath", MySqlDbType.VarChar);
             sqlparams[2].Value = ParentPath;
 
-            sqlparams[3] = new SqlParameter("@pMovieNewDate", SqlDbType.DateTime);
+            sqlparams[3] = new MySqlParameter("@pMovieNewDate", MySqlDbType.DateTime);
             if (MovieNewDate.Year >= 2000)
                 sqlparams[3].Value = MovieNewDate;
             else
                 sqlparams[3].Value = Convert.DBNull;
 
-            sqlparams[4] = new SqlParameter("@pMovieCount", SqlDbType.VarChar);
+            sqlparams[4] = new MySqlParameter("@pMovieCount", MySqlDbType.VarChar);
             sqlparams[4].Value = MovieCount;
 
-            sqlparams[5] = new SqlParameter("@pPhotoCount", SqlDbType.VarChar);
+            sqlparams[5] = new MySqlParameter("@pPhotoCount", MySqlDbType.VarChar);
             sqlparams[5].Value = PhotoCount;
 
-            sqlparams[6] = new SqlParameter("@pExtension", SqlDbType.VarChar);
+            sqlparams[6] = new MySqlParameter("@pExtension", MySqlDbType.VarChar);
             sqlparams[6].Value = Extension;
 
             myDbCon.SetParameter(sqlparams);

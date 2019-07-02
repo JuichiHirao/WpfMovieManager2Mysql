@@ -1,35 +1,28 @@
-﻿using System;
+﻿using Codeplex.Data;
+using Microsoft.CSharp.RuntimeBinder;
+using MySql.Data.MySqlClient;
+using System;
 using System.Collections.Generic;
+using System.Data;
+using System.IO;
 using System.Linq;
 using System.Text;
-using System.Data.SqlClient;
-using System.Data.SqlTypes;
-using System.Data;
-using System.Net;
-using System.Collections.Specialized;
-using System.Configuration;
-using System.Diagnostics;
-using System.Xml.Linq;
-using System.IO;
-using NLog;
-using Codeplex.Data;
-using Microsoft.CSharp.RuntimeBinder;
+using System.Threading.Tasks;
 
-namespace wpfMovieManager2Mysql
+namespace WpfMovieManager2Mysql
 {
-    public class DbConnection
+    public class MySqlDbConnection
     {
-        private static Logger _logger = LogManager.GetCurrentClassLogger();
-
         string settings;
-        private SqlConnection dbcon = null;
-        private SqlTransaction dbtrans = null;
+        private MySqlConnection dbcon = null;
+        private MySqlTransaction dbtrans = null;
 
-        private SqlParameter[] parameters;
+        private MySqlParameter[] parameters;
 
-        public DbConnection()
+        public MySqlDbConnection()
         {
-            string target = "mssql";
+            string target = "mysql";
+
             if (!File.Exists("credential.json"))
             {
                 throw new Exception("credential.jsonがDebug or Release配下に存在しません");
@@ -37,7 +30,6 @@ namespace wpfMovieManager2Mysql
             string json = File.ReadAllText("credential.json");
             var obj = DynamicJson.Parse(json);
             string database = "", datasource = "", user = "", password = "";
-
             try
             {
                 var targetObj = obj[target];
@@ -52,77 +44,60 @@ namespace wpfMovieManager2Mysql
                 throw new Exception("credential.jsonに存在しない[" + target + "]が指定されました or " + ex.Message);
             }
 
-            String connectionInfo = "Data Source=tcp:" + datasource + ";Initial Catalog=" + database + ";Persist Security Info=True;User ID=" + user + ";Password=" + password;
-
-            try
-            {
-                dbcon = new SqlConnection(connectionInfo);
-            }
-            catch(Exception ex)
-            {
-                _logger.Error(ex);
-            }
+            String connectionInfo = "Database=" + database + "; Data Source=" + datasource + ";User Id=" + user + "; Password=" + password;
+            dbcon = new MySqlConnection(connectionInfo);
         }
-        ~DbConnection()
+        ~MySqlDbConnection()
         {
             try
             {
-                if (dbcon != null)
-                    dbcon.Close();
+                dbcon.Close();
             }
             catch (InvalidOperationException)
             {
                 // 何もしない 2005/11/28の対応を参照
             }
         }
-        public string LoadPlace()
+
+        public string getDateStringSql(string myMySqlCommand)
         {
-            if (!File.Exists("UserConfig.xml"))
-                return "";
+            MySqlCommand myCommand;
+            MySqlDataReader myReader;
 
-            XElement root = XElement.Load("UserConfig.xml");
+            string resultStr = "";
 
-            string place = root.Value;
+            //dbcon.Open();
 
-            if (place == null)
-                place = "";
-
-            return place;
-/*
-            List<MoneySzeInputData> listSzeInputData = new List<MoneySzeInputData>();
-
-            foreach (XContainer xcon in listAll)
+            // トランザクションが開始済の場合
+            if (dbtrans == null)
             {
-                MoneySzeInputData inputdata = new MoneySzeInputData();
-
-                try
-                {
-                    inputdata.Date = Convert.ToDateTime(xcon.Element("年月日").Value);
-                    inputdata.DebitCode = xcon.Element("借方コード").Value;
-                    inputdata.DebitName = xcon.Element("借方名").Value;
-                    inputdata.CreditCode = xcon.Element("貸方コード").Value;
-                    inputdata.CreditName = xcon.Element("貸方名").Value;
-                    inputdata.Amount = Convert.ToInt64(xcon.Element("金額").Value);
-                    inputdata.Remark = xcon.Element("摘要").Value;
-                }
-                catch (NullReferenceException nullex)
-                {
-                    Debug.Write(nullex);
-                    // XML内にElementが存在しない場合に発生、無視する
-                }
-
-                listSzeInputData.Add(inputdata);
+                this.openConnection();
+                myCommand = new MySqlCommand(myMySqlCommand, this.getMySqlConnection());
             }
- */
-        }
-        public void SavePlace(string myPlace)
-        {
-            XElement root = new XElement("PLACE");
+            else
+            {
+                myCommand = new MySqlCommand(myMySqlCommand, this.getMySqlConnection());
+                myCommand.Connection = this.getMySqlConnection();
+                myCommand.Transaction = this.dbtrans;
+            }
 
-            root.Add(myPlace);
+            if (parameters != null)
+            {
+                for (int IndexParam = 0; IndexParam < parameters.Length; IndexParam++)
+                {
+                    myCommand.Parameters.Add(parameters[IndexParam]);
+                }
+            }
+            myReader = myCommand.ExecuteReader();
 
-            root.Save("UserConfig.xml");
+            if (myReader.Read())
+                resultStr = myReader.GetDateTime(0).ToString("yyyy/MM/dd HH:mm:dd");
+
+            myReader.Close();
+
+            return resultStr;
         }
+
         public void openConnection()
         {
             if (dbcon.State != ConnectionState.Open)
@@ -133,7 +108,7 @@ namespace wpfMovieManager2Mysql
             if (dbcon.State != ConnectionState.Closed)
                 dbcon.Close();
         }
-        public SqlConnection getSqlConnection()
+        public MySqlConnection getMySqlConnection()
         {
             return dbcon;
         }
@@ -144,7 +119,7 @@ namespace wpfMovieManager2Mysql
             else
                 return true;
         }
-        public SqlTransaction GetTransaction()
+        public MySqlTransaction GetTransaction()
         {
             return dbtrans;
         }
@@ -153,7 +128,7 @@ namespace wpfMovieManager2Mysql
             if (dbcon.State != ConnectionState.Open)
                 dbcon.Open();
 
-            dbtrans = dbcon.BeginTransaction(myTransaction);
+            dbtrans = dbcon.BeginTransaction();
         }
         public void RollbackTransaction()
         {
@@ -161,9 +136,9 @@ namespace wpfMovieManager2Mysql
             {
                 dbtrans.Rollback();
             }
-            catch (SqlException errsql)
+            catch (MySqlException)
             {
-                throw errsql;
+                throw;
             }
         }
         public void CommitTransaction()
@@ -172,21 +147,20 @@ namespace wpfMovieManager2Mysql
             {
                 dbtrans.Commit();
             }
-            catch (SqlException errsql)
+            catch (MySqlException)
             {
-                throw errsql;
+                throw;
             }
         }
 
         /// <summary>
         /// 指定されたＳＱＬ文を実行する
         /// </summary>
-        public SqlDataReader GetExecuteReader(string mySqlCommand)
+        public MySqlDataReader GetExecuteReader(string myMySqlCommand)
         {
-            SqlDataReader reader;
-            SqlCommand dbcmd = dbcon.CreateCommand();
+            MySqlCommand dbcmd = dbcon.CreateCommand();
 
-            dbcmd.CommandText = mySqlCommand;
+            dbcmd.CommandText = myMySqlCommand;
 
             // トランザクションが開始済の場合
             if (dbtrans == null)
@@ -194,7 +168,7 @@ namespace wpfMovieManager2Mysql
             else
             {
                 this.openConnection();
-                dbcmd.Connection = this.getSqlConnection();
+                dbcmd.Connection = this.getMySqlConnection();
                 dbcmd.Transaction = this.dbtrans;
             }
 
@@ -206,20 +180,20 @@ namespace wpfMovieManager2Mysql
                 }
             }
 
-            reader = dbcmd.ExecuteReader();
+            var reader = dbcmd.ExecuteReader();
             parameters = null;
 
             return reader;
         }
 
         /// <summary>
-        /// 指定されたＳＱＬ文を実行する
+        /// 指定されたMySql文を実行する
         /// </summary>
-        public int execSqlCommand(string mySqlCommand)
+        public int execMySqlCommand(string myMySqlCommand)
         {
-            SqlCommand dbcmd = dbcon.CreateCommand();
+            MySqlCommand dbcmd = dbcon.CreateCommand();
 
-            dbcmd.CommandText = mySqlCommand;
+            dbcmd.CommandText = myMySqlCommand;
 
             // トランザクションが開始済の場合
             if (dbtrans == null)
@@ -227,7 +201,7 @@ namespace wpfMovieManager2Mysql
             else
             {
                 this.openConnection();
-                dbcmd.Connection = this.getSqlConnection();
+                dbcmd.Connection = this.getMySqlConnection();
                 dbcmd.Transaction = this.dbtrans;
             }
 
@@ -239,26 +213,62 @@ namespace wpfMovieManager2Mysql
                 }
             }
 
-            int rowCnt = dbcmd.ExecuteNonQuery();
+            int count = dbcmd.ExecuteNonQuery();
 
             parameters = null;
 
             if (dbtrans == null)
                 dbcon.Close();
 
-            return rowCnt;
+            return count;
         }
-        public void SetParameter(SqlParameter[] myParams)
+        public void SetParameter(MySqlParameter[] myParams)
         {
             if (myParams == null)
                 parameters = null;
             else
                 parameters = myParams;
         }
-        public int getCountSql(string mySqlCommand)
+        /// <summary>
+        /// 指定されたSQL文を実行する
+        /// </summary>
+        public int execSqlCommand(string mySqlCommand)
         {
-            SqlCommand myCommand;
-            SqlDataReader myReader;
+            MySqlCommand dbcmd = dbcon.CreateCommand();
+
+            dbcmd.CommandText = mySqlCommand;
+
+            // トランザクションが開始済の場合
+            if (dbtrans == null)
+                this.openConnection();
+            else
+            {
+                this.openConnection();
+                dbcmd.Connection = this.getMySqlConnection();
+                dbcmd.Transaction = this.dbtrans;
+            }
+
+            if (parameters != null)
+            {
+                for (int IndexParam = 0; IndexParam < parameters.Length; IndexParam++)
+                {
+                    dbcmd.Parameters.Add(parameters[IndexParam]);
+                }
+            }
+
+            int count = dbcmd.ExecuteNonQuery();
+
+            parameters = null;
+
+            if (dbtrans == null)
+                dbcon.Close();
+
+            return count;
+        }
+        public int getCountSql(string myMySqlCommand)
+        {
+            MySqlCommand myCommand;
+            MySqlDataReader myReader;
 
             int Count = 0;
 
@@ -268,15 +278,15 @@ namespace wpfMovieManager2Mysql
             if (dbtrans == null)
             {
                 this.openConnection();
-                myCommand = new SqlCommand(mySqlCommand, this.getSqlConnection());
+                myCommand = new MySqlCommand(myMySqlCommand, this.getMySqlConnection());
             }
             else
             {
-                myCommand = new SqlCommand(mySqlCommand, this.getSqlConnection());
-                myCommand.Connection = this.getSqlConnection();
+                myCommand = new MySqlCommand(myMySqlCommand, this.getMySqlConnection());
+                myCommand.Connection = this.getMySqlConnection();
                 myCommand.Transaction = this.dbtrans;
             }
-            //myCommand = new SqlCommand( mySqlCommand, dbcon );
+            //myCommand = new MySqlCommand( myMySqlCommand, dbcon );
             if (parameters != null)
             {
                 for (int IndexParam = 0; IndexParam < parameters.Length; IndexParam++)
@@ -293,7 +303,7 @@ namespace wpfMovieManager2Mysql
                 {
                     parameters = null;
                     myReader.Close();
-                    throw new NullReferenceException("SQL ERROR");
+                    throw new NullReferenceException("MySql ERROR");
                 }
 
                 Count = myReader.GetInt32(0);
@@ -310,10 +320,10 @@ namespace wpfMovieManager2Mysql
 
             return Count;
         }
-        public string getStringSql(string mySqlCommand)
+        public string getStringSql(string myMySqlCommand)
         {
-            SqlCommand myCommand;
-            SqlDataReader myReader;
+            MySqlCommand myCommand;
+            MySqlDataReader myReader;
 
             string myString = "";
 
@@ -323,21 +333,21 @@ namespace wpfMovieManager2Mysql
             if (dbtrans == null)
             {
                 this.openConnection();
-                myCommand = new SqlCommand(mySqlCommand, this.getSqlConnection());
+                myCommand = new MySqlCommand(myMySqlCommand, this.getMySqlConnection());
             }
             else
             {
-                myCommand = new SqlCommand(mySqlCommand, this.getSqlConnection());
-                myCommand.Connection = this.getSqlConnection();
+                myCommand = new MySqlCommand(myMySqlCommand, this.getMySqlConnection());
+                myCommand.Connection = this.getMySqlConnection();
                 myCommand.Transaction = this.dbtrans;
             }
-            //myCommand = new SqlCommand( mySqlCommand, dbcon );
+            //myCommand = new MySqlCommand( myMySqlCommand, dbcon );
 
             myReader = myCommand.ExecuteReader();
 
             myReader.Read();
 
-            myString = myReader.GetSqlString(0).ToString();
+            myString = MySqlDbExportCommon.GetDbString(myReader, 0);
 
             myReader.Close();
 
@@ -346,8 +356,8 @@ namespace wpfMovieManager2Mysql
 
         public int getIntSql(string mySqlCommand)
         {
-            SqlCommand myCommand;
-            SqlDataReader myReader;
+            MySqlCommand myCommand;
+            MySqlDataReader myReader;
 
             int myInteger = 0;
 
@@ -357,12 +367,12 @@ namespace wpfMovieManager2Mysql
             if (dbtrans == null)
             {
                 this.openConnection();
-                myCommand = new SqlCommand(mySqlCommand, this.getSqlConnection());
+                myCommand = new MySqlCommand(mySqlCommand, this.getMySqlConnection());
             }
             else
             {
-                myCommand = new SqlCommand(mySqlCommand, this.getSqlConnection());
-                myCommand.Connection = this.getSqlConnection();
+                myCommand = new MySqlCommand(mySqlCommand, this.getMySqlConnection());
+                myCommand.Connection = this.getMySqlConnection();
                 myCommand.Transaction = this.dbtrans;
             }
 
@@ -373,8 +383,6 @@ namespace wpfMovieManager2Mysql
                     myCommand.Parameters.Add(parameters[IndexParam]);
                 }
             }
-            //myCommand = new SqlCommand( mySqlCommand, dbcon );
-
             myReader = myCommand.ExecuteReader();
 
             if (myReader.Read())
@@ -391,8 +399,8 @@ namespace wpfMovieManager2Mysql
         /// </summary>
         public long getSqlCommandRow(string mySqlCommand)
         {
-            SqlCommand myCommand;
-            SqlDataReader myReader;
+            MySqlCommand myCommand;
+            MySqlDataReader myReader;
 
             long lngDataRowCount = 0;
 
@@ -402,15 +410,15 @@ namespace wpfMovieManager2Mysql
             if (dbtrans == null)
             {
                 this.openConnection();
-                myCommand = new SqlCommand(mySqlCommand, this.getSqlConnection());
+                myCommand = new MySqlCommand(mySqlCommand, this.getMySqlConnection());
             }
             else
             {
-                myCommand = new SqlCommand(mySqlCommand, this.getSqlConnection());
-                myCommand.Connection = this.getSqlConnection();
+                myCommand = new MySqlCommand(mySqlCommand, this.getMySqlConnection());
+                myCommand.Connection = this.getMySqlConnection();
                 myCommand.Transaction = this.dbtrans;
             }
-            //myCommand = new SqlCommand( mySqlCommand, dbcon );
+            //myCommand = new MySqlCommand( myMySqlCommand, dbcon );
 
             myReader = myCommand.ExecuteReader();
 
@@ -421,45 +429,6 @@ namespace wpfMovieManager2Mysql
             myReader.Close();
 
             return lngDataRowCount;
-        }
-        public long getAmountSql(string mySqlCommand)
-        {
-            SqlCommand myCommand;
-            SqlDataReader myReader;
-
-            long lngAmount = 0;
-
-            //dbcon.Open();
-
-            // トランザクションが開始済の場合
-            if (dbtrans == null)
-            {
-                this.openConnection();
-                myCommand = new SqlCommand(mySqlCommand, this.getSqlConnection());
-            }
-            else
-            {
-                myCommand = new SqlCommand(mySqlCommand, this.getSqlConnection());
-                myCommand.Connection = this.getSqlConnection();
-                myCommand.Transaction = this.dbtrans;
-            }
-            //myCommand = new SqlCommand( mySqlCommand, dbcon );
-
-            myReader = myCommand.ExecuteReader();
-
-            myReader.Read();
-
-            SqlMoney mySqlMoney = myReader.GetSqlMoney(0);
-            if (mySqlMoney.IsNull == true)
-            {
-                myReader.Close();
-                return 0;
-            }
-            lngAmount = mySqlMoney.ToInt64();
-
-            myReader.Close();
-
-            return lngAmount;
         }
     }
 }

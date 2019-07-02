@@ -5,12 +5,13 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using WpfMovieManager2Mysql;
 
 namespace wpfMovieManager2Mysql.detail
 {
     abstract public class BaseDetail
     {
-        DbConnection dbcon;
+        MySqlDbConnection dbcon;
 
         public List<common.FileContents> listFileInfo = new List<common.FileContents>();
         public ICollectionView ColViewListFileInfo;

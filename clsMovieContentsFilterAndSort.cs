@@ -5,12 +5,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Data;
+using WpfMovieManager2Mysql;
 
 namespace wpfMovieManager2Mysql
 {
     public class MovieContentsFilterAndSort
     {
-        DbConnection dbcon;
+        MySqlDbConnection dbcon;
         public List<MovieContents> listMovieContens;
         public ICollectionView ColViewListMovieContents;
 
@@ -53,7 +54,7 @@ namespace wpfMovieManager2Mysql
             }
             return null;
         }
-        public MovieContentsFilterAndSort(DbConnection myDbCon)
+        public MovieContentsFilterAndSort(MySqlDbConnection myDbCon)
         {
             dbcon = myDbCon;
 
@@ -62,7 +63,7 @@ namespace wpfMovieManager2Mysql
 
         public MovieContentsFilterAndSort()
         {
-            dbcon = new DbConnection();
+            dbcon = new MySqlDbConnection();
 
             DataSet();
         }
