@@ -22,13 +22,15 @@ namespace wpfMovieManager2Mysql
                 myDbCon = new MySqlDbConnection();
 
             string queryString
-                        = "SELECT id "
+                        = "SELECT c.id "
                         + "    , store_label, name, product_number, extension "
                         + "    , tag, publish_date, file_date, file_count "
-                        + "    , size, rating, comment, remark "
+                        + "    , size, rating, c.comment, c.remark "
                         + "    , file_status "
-                        + "    , created_at, updated_at "
-                        + "  FROM contents";
+                        + "    , c.created_at, c.updated_at, s.path "
+                        + "  FROM contents as c "
+                        + "    LEFT JOIN av.store as s "
+                        + "      ON c.store_label = s.label";
 
             MySqlDataReader reader = null;
             try
@@ -64,6 +66,7 @@ namespace wpfMovieManager2Mysql
                         data.FileStatus = MySqlDbExportCommon.GetDbString(reader, 13);
                         data.CreatedAt = MySqlDbExportCommon.GetDbDateTime(reader, 14);
                         data.UpdatedAt = MySqlDbExportCommon.GetDbDateTime(reader, 15);
+                        data.Path = MySqlDbExportCommon.GetDbString(reader, 16);
 
                         listMContents.Add(data);
                     }

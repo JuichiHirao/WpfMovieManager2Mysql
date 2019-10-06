@@ -19,7 +19,7 @@ namespace wpfMovieManager2Mysql.detail
 
         public FileDetail(MovieContents myMovieContents, MovieGroup myGroup)
         {
-            ExistPath = myMovieContents.GetExistPath(myGroup);
+            ExistPath = myMovieContents.Path;
             ContentsName = myMovieContents.Name;
 
             if (ExistPath != null)

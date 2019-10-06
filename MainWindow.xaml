@@ -483,7 +483,7 @@
                     <Button Name="btnFileDetailUpdate" Style="{StaticResource CircleButton}" Width="45" Height="45" HorizontalAlignment="Left" VerticalAlignment="Top" Click="btnSiteDetailUpdate_Click">更新</Button>
                     <TextBlock Text="Tag" Margin="5,5,5,5" Grid.Row="1"  />
                     <TextBox Name="txtFileDetailContentsTag" Grid.Row="1" TextChanged="OnFileDetail_TextChanged" />
-                    <TextBlock Text="Label" Margin="5,5,5,5" Grid.Row="2" />
+                    <TextBlock Text="StoreLabel" Margin="5,5,5,5" Grid.Row="2" />
                     <TextBox Name="txtFileDetailContentsLabel" Grid.Row="2" TextChanged="OnFileDetail_TextChanged" />
                     <TextBlock Text="SellDate" Margin="5,5,5,5" Grid.Row="3" />
                     <TextBox Name="txtFileDetailContentsSellDate" Grid.Row="3" TextChanged="OnFileDetail_TextChanged" />
@@ -493,7 +493,7 @@
                     <TextBox Name="txtFileDetailContentsExtension" Grid.Row="5" TextChanged="OnFileDetail_TextChanged" />
                     <TextBlock Text="FileDate" Grid.Row="6" />
                     <TextBox Name="txtFileDetailContentsFileDate" Grid.Row="6" TextChanged="OnFileDetail_TextChanged" />
-                    <TextBlock Text="FileDate" Grid.Row="7" />
+                    <TextBlock Text="FileCount" Grid.Row="7" />
                     <TextBox Name="txtFileDetailContentsFileCount" Grid.Row="7" TextChanged="OnFileDetail_TextChanged" />
                     <Grid HorizontalAlignment="Center" Grid.ColumnSpan="3" Grid.Row="8">
                         <Grid.ColumnDefinitions>
@@ -613,6 +613,8 @@
                     <ColumnDefinition />
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition />
                     <RowDefinition />
                     <RowDefinition />
                 </Grid.RowDefinitions>

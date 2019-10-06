@@ -25,11 +25,6 @@ namespace wpfMovieManager2Mysql.common
         }
         public void Execute(MovieContents myMovieContents, string myPlayerName, MovieGroup myGroup)
         {
-            string path = myMovieContents.GetExistPath(myGroup);
-
-            if (path == null)
-                return;
-
             string executePathname = "";
 
             // 複数ファイルのためPlayerに対応したリストを作成する
@@ -53,17 +48,19 @@ namespace wpfMovieManager2Mysql.common
             }
             else
             {
-                SiteDetail ColViewSiteDetail = new SiteDetail(path);
+                if (String.IsNullOrEmpty(myMovieContents.ExistList))
+                    return;
 
-                string listFilename = Path.Combine(path, "list");
-                if (File.Exists(listFilename))
+                SiteDetail ColViewSiteDetail = new SiteDetail(myMovieContents.Path);
+
+                if (!String.IsNullOrEmpty(myMovieContents.ExistList))
                 {
                     List<FileInfo> files = new List<FileInfo>();
-                    StreamReader sreader = new StreamReader(listFilename);
+                    StreamReader sreader = new StreamReader(myMovieContents.ExistList);
                     string line = sreader.ReadLine();
                     while (line != null)
                     {
-                        string movieFilename = Path.Combine(path, line);
+                        string movieFilename = Path.Combine(myMovieContents.Path, line);
                         FileInfo fileinfo = new FileInfo(movieFilename);
                         if (fileinfo.Exists)
                             files.Add(fileinfo);

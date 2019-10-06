@@ -119,12 +119,7 @@ namespace wpfMovieManager2Mysql
         {
             Clear();
 
-            if (myGroupData.Kind == 1)
-                SetLabel(myGroupData.Explanation);
-            else if (myGroupData.Kind == 3)
-                SetSiteContents(myGroupData.Label, myGroupData.Name);
-            else if (myGroupData.Kind == 4)
-                SetActress(myGroupData.Name);
+            SetLabel(myGroupData.Label);
 
             GroupFilesInfo FilesInfo = Execute();
 
@@ -193,7 +188,7 @@ namespace wpfMovieManager2Mysql
 
                 if (FilterLabel.Length > 0)
                 {
-                    if (data.Label.ToUpper() == FilterLabel.ToUpper())
+                    if (data.StoreLabel.ToUpper() == FilterLabel.ToUpper())
                         matchCount++;
                 }
 

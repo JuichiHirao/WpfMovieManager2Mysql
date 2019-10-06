@@ -40,7 +40,7 @@ namespace wpfMovieManager2Mysql
 
         public MovieContents()
         {
-            //Id = Id;
+            Id = -1;
             Name = "";
             SiteName = "";
             Label = "";
@@ -49,118 +49,67 @@ namespace wpfMovieManager2Mysql
             Extension = "";
             Rating = 0;
             Comment = "";
-            ChildTableName = "";
-            IsExecuteExistPath = false;
         }
 
-        private bool IsExecuteExistPath { get; set; }
-
-        public string[] _ExistMovie;
-        public string[] ExistMovie
+        public bool IsSite()
         {
-            get
-            {
-                if (!IsExecuteExistPath)
-                    throw new Exception("GetExistPathの実行後でないとExistMovieは参照できません");
+            if (StoreLabel.IndexOf(" ") > 0)
+                return true;
 
-                return _ExistMovie;
-            }
-            set
-            {
-                _ExistMovie = value;
-            }
+            return false;
         }
 
-        public string GetExistPath(MovieGroup myGroup)
+        public void SetMovieInfo()
         {
-            if (myGroup == null)
-                return null;
+            if (String.IsNullOrEmpty(Path))
+                return;
 
-            IsExecuteExistPath = true;
-            if (Kind == KIND_FILE)
+            string filePathname = System.IO.Path.Combine(Path, @Name + "*");
+
+            ExistList = "";
+            // StoreLabelにスペース文字列が存在する場合、SiteContentsかもなので、listファイルをチェック
+            if (IsSite())
             {
-                string fileName = "";
-                if (Extension == null || Extension.Length <= 0)
+                string listFilename = System.IO.Path.Combine(Path, "list");
+
+                if (File.Exists(listFilename))
                 {
-                    // ファイル名の中にスラッシュが入っているとDirectoryNotFoundExceptionが発生する
-                    string[] tempExistMovie = null;
-                    try
-                    {
-                        tempExistMovie = Directory.GetFiles(Label, @Name + "*");
-                    }
-                    catch (DirectoryNotFoundException ex)
-                    {
-                        return null;
-                    }
-
-                    Regex regexMov = new Regex(MovieContents.REGEX_MOVIE_EXTENTION, RegexOptions.IgnoreCase);
-
-                    int cnt = 0;
-                    foreach(string file in tempExistMovie)
-                    {
-                        if (regexMov.IsMatch(file))
-                        {
-                            ExistMovie = new string[1];
-                            ExistMovie[0] = file;
-
-                            return new FileInfo(file).DirectoryName;
-                        }
-                    }
-                }
-                else
-                    fileName = Path.Combine(Label, Name) + "." + Extension.ToLower();
-
-                if (File.Exists(fileName))
-                {
-                    ExistMovie = new string[1];
-                    ExistMovie[0] = fileName;
-                    return new FileInfo(fileName).DirectoryName;
-                }
-                else
-                {
-                    string fullName = Name + "_*." + Extension.ToLower();
-                    // ファイル名の中にスラッシュが入っているとDirectoryNotFoundExceptionが発生する
-                    try
-                    {
-                        ExistMovie = Directory.GetFiles(Label, @fullName);
-                    }
-                    catch(DirectoryNotFoundException ex)
-                    {
-                        return null;
-                    }
-                    catch(IOException ex)
-                    {
-                        return null;
-                    }
-
-                    if (ExistMovie != null && ExistMovie.Length > 0)
-                        return new FileInfo(ExistMovie[0]).DirectoryName;
-                }
-            }
-            else if (Kind == KIND_SITE)
-            {
-                string path = Path.Combine(myGroup.Explanation, Name);
-
-                if (Directory.Exists(path))
-                    return new DirectoryInfo(path).FullName;
-            }
-            if (Kind == MovieContents.KIND_CONTENTS)
-            {
-                string path = Path.Combine(myGroup.Explanation, Name);
-
-                if (Directory.Exists(path))
-                    return new DirectoryInfo(path).FullName;
-
-                if (File.Exists(path))
-                {
-                    ExistMovie = new string[1];
-                    ExistMovie[0] = path;
-                    return new FileInfo(path).DirectoryName;
+                    ExistList = listFilename;
+                    return;
                 }
             }
 
-            return null;
+            Regex regexMov = new Regex(MovieContents.REGEX_MOVIE_EXTENTION, RegexOptions.IgnoreCase);
+
+            int cnt = 0;
+            string[] tempExistMovie = null;
+            try
+            {
+                tempExistMovie = Directory.GetFiles(Path, @Name + "*");
+            }
+            catch (DirectoryNotFoundException ex)
+            {
+                return;
+            }
+
+            List<string> listExistMovie = new List<string>();
+            foreach (string file in tempExistMovie)
+            {
+                if (file.IndexOf("jpg") > 0)
+                    continue;
+
+                listExistMovie.Add(file);
+            }
+
+            if (listExistMovie.Count > 0)
+                ExistMovie = listExistMovie.ToArray();
+
+            return;
         }
+
+        public string ExistList { get; set; }
+        public string[] ExistMovie { get; set; }
+
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
@@ -201,6 +150,20 @@ namespace wpfMovieManager2Mysql
             {
                 _Name = value;
                 NotifyPropertyChanged("Name");
+            }
+        }
+
+        private string _Path;
+        public string Path
+        {
+            get
+            {
+                // フォルダの～の文字コードがmysqlに格納されているUTF-8ではないので、DirectoryNotFoundExceptionが発生する
+                return _Path.Replace("〜", "～");
+            }
+            set
+            {
+                _Path = value;
             }
         }
 
@@ -432,70 +395,57 @@ namespace wpfMovieManager2Mysql
 
         public void DbUpdate(MySqlDbConnection myDbCon)
         {
-            int paramCnt = 0;
-            int paramMax = 0;
-            string sqlCommand = "UPDATE " + GetTableName() + " ";
-            sqlCommand += "SET NAME = @pName ";
-            sqlCommand += "  , LABEL = @pLabel ";
-            sqlCommand += "  , TAG = @pTag ";
-            sqlCommand += "  , EXTENSION = @pExtension ";
-            if (this.Kind == MovieContents.KIND_FILE)
-            {
-                sqlCommand += "  , PRODUCT_NUMBER = @pProductNumber ";
-                sqlCommand += "  , SELL_DATE = @pSellDate ";
-                sqlCommand += "  , FILE_DATE = @pFileDate ";
-                paramMax = 8;
-            }
-            else
-                paramMax = 5;
-
+            string sqlCommand = "UPDATE contents ";
+            sqlCommand += "SET name = @pName ";
+            sqlCommand += "  , tag = @pTag ";
+            sqlCommand += "  , extension = @pExtension ";
+            sqlCommand += "  , product_number = @pProductNumber ";
+            sqlCommand += "  , publish_date = @pSellDate ";
+            sqlCommand += "  , file_date = @pFileDate ";
             sqlCommand += "WHERE ID = @pId ";
 
             MySqlCommand command = new MySqlCommand();
 
             command = new MySqlCommand(sqlCommand, myDbCon.getMySqlConnection());
 
-            MySqlParameter[] sqlparams = new MySqlParameter[paramMax];
+            List<MySqlParameter> listSqlParam = new List<MySqlParameter>();
 
-            paramCnt = 0;
-            sqlparams[paramCnt] = new MySqlParameter("@pName", SqlDbType.VarChar);
-            sqlparams[paramCnt].Value = Name;
-            paramCnt++;
+            MySqlParameter sqlparam = new MySqlParameter("@pName", SqlDbType.VarChar);
+            sqlparam.Value = Name;
+            listSqlParam.Add(sqlparam);
 
-            sqlparams[paramCnt] = new MySqlParameter("@pLabel", SqlDbType.VarChar);
-            sqlparams[paramCnt].Value = Label;
-            paramCnt++;
+            sqlparam = new MySqlParameter("@pLabel", SqlDbType.VarChar);
+            sqlparam.Value = Label;
+            listSqlParam.Add(sqlparam);
 
-            sqlparams[paramCnt] = new MySqlParameter("@pTag", SqlDbType.VarChar);
+            sqlparam = new MySqlParameter("@pTag", SqlDbType.VarChar);
             if (Tag == null || Tag.Length <= 0)
-                sqlparams[paramCnt].Value = DBNull.Value;
+                sqlparam.Value = DBNull.Value;
             else
-                sqlparams[paramCnt].Value = Tag;
-            paramCnt++;
+                sqlparam.Value = Tag;
+            listSqlParam.Add(sqlparam);
 
-            sqlparams[paramCnt] = new MySqlParameter("@pExtension", SqlDbType.VarChar);
-            sqlparams[paramCnt].Value = Extension;
-            paramCnt++;
+            sqlparam = new MySqlParameter("@pExtension", SqlDbType.VarChar);
+            sqlparam.Value = Extension;
+            listSqlParam.Add(sqlparam);
 
-            if (this.Kind == MovieContents.KIND_FILE)
-            {
-                sqlparams[paramCnt] = new MySqlParameter("@pProductNumber", SqlDbType.VarChar);
-                sqlparams[paramCnt].Value = ProductNumber;
-                paramCnt++;
+            sqlparam = new MySqlParameter("@pProductNumber", SqlDbType.VarChar);
+            sqlparam.Value = ProductNumber;
+            listSqlParam.Add(sqlparam);
 
-                sqlparams[paramCnt] = new MySqlParameter("@pSellDate", SqlDbType.Date);
-                sqlparams[paramCnt].Value = SellDate;
-                paramCnt++;
+            sqlparam = new MySqlParameter("@pSellDate", SqlDbType.Date);
+            sqlparam.Value = SellDate;
+            listSqlParam.Add(sqlparam);
 
-                sqlparams[paramCnt] = new MySqlParameter("@pFileDate", SqlDbType.Date);
-                sqlparams[paramCnt].Value = FileDate;
-                paramCnt++;
-            }
+            sqlparam = new MySqlParameter("@pFileDate", SqlDbType.Date);
+            sqlparam.Value = FileDate;
+            listSqlParam.Add(sqlparam);
 
-            sqlparams[paramCnt] = new MySqlParameter("@pId", SqlDbType.Int);
-            sqlparams[paramCnt].Value = Id;
+            sqlparam = new MySqlParameter("@pId", SqlDbType.Int);
+            sqlparam.Value = Id;
+            listSqlParam.Add(sqlparam);
 
-            myDbCon.SetParameter(sqlparams);
+            myDbCon.SetParameter(listSqlParam.ToArray());
             myDbCon.execSqlCommand(sqlCommand);
 
             return;
@@ -527,9 +477,9 @@ namespace wpfMovieManager2Mysql
 
         public void DbUpdateComment(string myComment, MySqlDbConnection myDbCon)
         {
-            string sqlCommand = "UPDATE " + GetTableName() + " ";
-            sqlCommand += "SET COMMENT = @pComment ";
-            sqlCommand += "WHERE ID = @pId ";
+            string sqlCommand = "UPDATE contents ";
+            sqlCommand += "SET comment = @pComment ";
+            sqlCommand += "WHERE id = @pId ";
 
             MySqlCommand command = new MySqlCommand();
 
@@ -548,15 +498,15 @@ namespace wpfMovieManager2Mysql
             int cnt = myDbCon.execSqlCommand(sqlCommand);
 
             if (cnt <= 0)
-                throw new Exception("Comment更新行が0件でした " + GetTableName() + " Id " + Id);
+                throw new Exception("Comment更新行が0件でした Id [" + Id + "]");
 
         }
 
         public void DbUpdateName(string myName, MySqlDbConnection myDbCon)
         {
-            string sqlCommand = "UPDATE " + GetTableName() + " ";
-            sqlCommand += "SET NAME = @pName ";
-            sqlCommand += "WHERE ID = @pId ";
+            string sqlCommand = "UPDATE contents ";
+            sqlCommand += "SET name = @pName ";
+            sqlCommand += "WHERE id = @pId ";
 
             MySqlCommand command = new MySqlCommand();
 
@@ -575,7 +525,7 @@ namespace wpfMovieManager2Mysql
             int cnt = myDbCon.execSqlCommand(sqlCommand);
 
             if (cnt <= 0)
-                throw new Exception("Name更新行が0件でした " + GetTableName() + " Id " + Id);
+                throw new Exception("Name更新行が0件でした Id [" + Id + "]");
 
         }
 
@@ -592,9 +542,9 @@ namespace wpfMovieManager2Mysql
         }
         public void DbUpdateRating(int myRating, MySqlDbConnection myDbCon)
         {
-            string sqlCommand = "UPDATE " + GetTableName() + " ";
-            sqlCommand += "SET RATING = @pRating ";
-            sqlCommand += "WHERE ID = @pId ";
+            string sqlCommand = "UPDATE contents ";
+            sqlCommand += "SET rating = @pRating ";
+            sqlCommand += "WHERE id = @pId ";
 
             MySqlCommand command = new MySqlCommand();
 
@@ -612,15 +562,15 @@ namespace wpfMovieManager2Mysql
             int cnt = myDbCon.execSqlCommand(sqlCommand);
 
             if (cnt <= 0)
-                throw new Exception("更新行が0件でした " + GetTableName() + " Id " + Id);
+                throw new Exception("更新行が0件でした Id [" + Id + "]");
 
             Rating = myRating;
         }
 
         public void DbDelete(MySqlDbConnection myDbCon)
         {
-            string sqlCommand = "DELETE FROM " + GetTableName() + " ";
-            sqlCommand += "WHERE ID = @pId ";
+            string sqlCommand = "DELETE FROM contents ";
+            sqlCommand += "WHERE id = @pId ";
 
             MySqlCommand command = new MySqlCommand();
 
@@ -633,11 +583,6 @@ namespace wpfMovieManager2Mysql
 
             myDbCon.SetParameter(sqlparams);
             myDbCon.execSqlCommand(sqlCommand);
-        }
-
-        public void ParseToSite(MovieGroup myGroup)
-        {
-            string dir = Path.Combine(myGroup.Explanation, Label);
         }
 
         public void DbExportSiteContents(MySqlDbConnection myDbCon)

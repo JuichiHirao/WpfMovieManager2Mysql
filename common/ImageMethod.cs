@@ -14,12 +14,13 @@ namespace wpfMovieManager2Mysql.common
         DirectoryInfo targetDirectory;
         MovieGroup targetGroup;
 
-        FileInfo imagePackageFileInfo;
+        public FileInfo PackageFileInfo;
         public List<FileInfo> listImageFileInfo;
-        private string[] arrImagePathname = null;
+        public string[] arrImagePathname = null;
         private int positionList;
         private int pages;
         public string DisplayPage;
+        public bool IsThumbnail = false;
 
         public Image(MovieContents myData, MovieGroup myGroup)
         {
@@ -29,117 +30,86 @@ namespace wpfMovieManager2Mysql.common
 
             Settting();
         }
-        public Image(MovieContents myData, int myNumberSheets, MovieGroup myGroup)
-        {
-            data = myData;
-            numberSheets = myNumberSheets;
-            listImageFileInfo = new List<FileInfo>();
-            targetGroup = myGroup;
 
-            DisplayPage = "";
-            Settting();
-        }
         public void Settting()
         {
-            // File
-            if (data.Kind == MovieContents.KIND_FILE
-                || data.Kind == MovieContents.KIND_CONTENTS)
+            string packagePathname = Path.Combine(data.Path, data.Name + ".jpg");
+
+            if (File.Exists(packagePathname))
             {
-                FileInfo fileinfo = null;
-                if (data.Kind == MovieContents.KIND_CONTENTS)
+                // File
+                FileInfo fileinfo = new FileInfo(packagePathname);
+                PackageFileInfo = fileinfo;
+                targetDirectory = fileinfo.Directory;
+
+                arrImagePathname = Directory.GetFiles(data.Path, data.Name + "_*.jpg");
+                if (arrImagePathname.Length > 0)
                 {
-                    string path = data.GetExistPath(targetGroup);
-
-                    if (path != null)
-                        data.Label = path;
-                }
-                if (File.Exists(Path.Combine(data.Label, data.Name + ".jpg")))
-                    fileinfo = new FileInfo(Path.Combine(data.Label, data.Name + ".jpg"));
-
-                if (fileinfo != null && fileinfo.Exists)
-                {
-                    imagePackageFileInfo = fileinfo;
-                    targetDirectory = fileinfo.Directory;
-                }
-
-                // KoreanPornoなどのフォルダ名でPhotoが存在する場合
-                if (Directory.Exists(Path.Combine(data.Label, data.Name)))
-                {
-                    DirectoryInfo imageDirInfo = new DirectoryInfo(Path.Combine(data.Label, data.Name));
-
-                    if (imageDirInfo != null)
+                    listImageFileInfo.Clear();
+                    foreach (string file in arrImagePathname)
                     {
-                        arrImagePathname = Directory.GetFiles(imageDirInfo.FullName, "*jpg", SearchOption.AllDirectories);
+                        fileinfo = new FileInfo(file);
 
-                        if (arrImagePathname.Length <= 0)
-                            return;
+                        if (fileinfo.Name == data.Name + ".jpg")
+                            continue;
 
-                        Array.Sort(arrImagePathname);
+                        listImageFileInfo.Add(fileinfo);
+                    }
 
+                }
+                if (listImageFileInfo.Count > 0)
+                    IsThumbnail = true;
+            }
+            else
+            {
+                // Site
+                string patname = Path.Combine(data.Path, data.Name);
+                string[] tempImagePathname = null;
+                if (Directory.Exists(patname))
+                {
+                    targetDirectory = new DirectoryInfo(patname);
+                    tempImagePathname = Directory.GetFiles(targetDirectory.FullName, "*jpg", SearchOption.TopDirectoryOnly);
+
+                    if (tempImagePathname.Length <= 0)
+                        return;
+
+                    Array.Sort(tempImagePathname);
+
+                    arrImagePathname = tempImagePathname;
+                    if (arrImagePathname.Length >= 1)
+                    {
+                        pages = arrImagePathname.Length / 4;
+                        SetDisplayImagesPath();
+                    }
+                }
+                else
+                {
+                    // KoreanPorno
+                    tempImagePathname = Directory.GetFiles(data.Path, data.Name + "*.jpg");
+
+                    if (tempImagePathname.Length > 0)
+                    {
+                        Array.Sort(tempImagePathname);
+
+                        FileInfo fileinfo = new FileInfo(tempImagePathname[0]);
+                        PackageFileInfo = fileinfo;
+                        targetDirectory = fileinfo.Directory;
+
+                        arrImagePathname = tempImagePathname;
                         if (arrImagePathname.Length >= 1)
                         {
                             pages = arrImagePathname.Length / 4;
-                            SetDisplaySiteImagesPath(imageDirInfo.FullName);
+                            SetDisplayImagesPath();
                         }
+
+                        IsThumbnail = true;
                     }
-                }
-            }
-            // Site
-            else if (data.Kind == MovieContents.KIND_SITE)
-            {
-                if (Directory.Exists(Path.Combine(targetGroup.Explanation, data.Name)))
-                    targetDirectory = new DirectoryInfo(Path.Combine(targetGroup.Explanation, data.Name));
-
-                if (targetDirectory == null)
-                    return;
-
-                arrImagePathname = Directory.GetFiles(targetDirectory.FullName, "*jpg", SearchOption.TopDirectoryOnly);
-
-                if (arrImagePathname.Length <= 0)
-                    return;
-
-                Array.Sort(arrImagePathname);
-
-                if (arrImagePathname.Length >= 1)
-                {
-                    pages = arrImagePathname.Length / 4;
-                    SetDisplaySiteImagesPath(targetDirectory.FullName);
                 }
             }
 
             return;
         }
-        public bool IsThumbnail()
-        {
-            if (data.Kind == MovieContents.KIND_FILE)
-            {
-                FileInfo fileinfo = null;
-                if (File.Exists(Path.Combine(data.Label, data.Name + "_th.jpg")))
-                    fileinfo = new FileInfo(Path.Combine(data.Label, data.Name + "_th.jpg"));
 
-                if (fileinfo != null && fileinfo.Exists)
-                {
-                    listImageFileInfo.Clear();
-                    listImageFileInfo.Add(fileinfo);
-                    return true;
-                }
-            }
-
-            // KIND_FILE以外はサムネイル画像は無い
-            return false;
-        }
-        public FileInfo GetDefaultPackageFileInfo()
-        {
-            if (data.Kind == MovieContents.KIND_FILE)
-                return imagePackageFileInfo;
-
-            if (data.Kind == MovieContents.KIND_SITE)
-            {
-                //SetDisplaySiteImagesPath(targetDirectory.FullName);
-            }
-
-            return null;
-        }
         private List<FileInfo> GetContentsImages()
         {
             string searchPath = "";
@@ -166,7 +136,14 @@ namespace wpfMovieManager2Mysql.common
                 listImageFileInfo.Add(new FileInfo(arrImagePathname[3]));
             }
             else
-                listImageFileInfo.Add(new FileInfo(arrImagePathname[0]));
+            {
+                if (arrImagePathname.Length >= 1)
+                    listImageFileInfo.Add(new FileInfo(arrImagePathname[0]));
+                if (arrImagePathname.Length >= 2)
+                    listImageFileInfo.Add(new FileInfo(arrImagePathname[1]));
+                if (arrImagePathname.Length >= 3)
+                    listImageFileInfo.Add(new FileInfo(arrImagePathname[2]));
+            }
 
             positionList = 0;
             SetDisplayPage(positionList);
@@ -174,11 +151,8 @@ namespace wpfMovieManager2Mysql.common
             return listImageFileInfo;
         }
 
-        private void SetDisplaySiteImagesPath(string mySitePath)
+        private void SetDisplayImagesPath()
         {
-            if (!Directory.Exists(mySitePath))
-                return;
-
             listImageFileInfo = new List<FileInfo>();
 
             if (arrImagePathname.Length >= 4)
@@ -189,7 +163,14 @@ namespace wpfMovieManager2Mysql.common
                 listImageFileInfo.Add(new FileInfo(arrImagePathname[3]));
             }
             else
-                listImageFileInfo.Add(new FileInfo(arrImagePathname[0]));
+            {
+                if (arrImagePathname.Length >= 1)
+                    listImageFileInfo.Add(new FileInfo(arrImagePathname[0]));
+                if (arrImagePathname.Length >= 2)
+                    listImageFileInfo.Add(new FileInfo(arrImagePathname[1]));
+                if (arrImagePathname.Length >= 3)
+                    listImageFileInfo.Add(new FileInfo(arrImagePathname[2]));
+            }
 
             positionList = 0;
             SetDisplayPage(positionList);

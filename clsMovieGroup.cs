@@ -99,7 +99,7 @@ namespace wpfMovieManager2Mysql
             ColViewListMovieGroup = (ListCollectionView)CollectionViewSource.GetDefaultView(listMovieGroup);
 
             ColViewListMovieGroup.SortDescriptions.Clear();
-            ColViewListMovieGroup.SortDescriptions.Add(new SortDescription("UpdatedDate", ListSortDirection.Descending));
+            ColViewListMovieGroup.SortDescriptions.Add(new SortDescription("UpdatedAt", ListSortDirection.Descending));
 
             listSiteName = GetDistinctSiteName();
         }

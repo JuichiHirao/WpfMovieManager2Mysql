@@ -371,7 +371,7 @@ namespace wpfMovieManager2Mysql
             string sortColumns = Convert.ToString(cmbContentsSort.SelectedValue);
             ColViewMovieContents.SetSort(sortColumns, GetSortOrder(btnSortOrder, false));
 
-            ColViewMovieGroup.SetSort("UpdatedDate", ListSortDirection.Descending);
+            ColViewMovieGroup.SetSort("CreatedDate", ListSortDirection.Descending);
             ColViewMovieGroup.SetFilterKind(kind);
             if (dispinfoGroupButton != "S")
                 ColViewMovieGroup.SetSiteName("");
@@ -437,17 +437,13 @@ namespace wpfMovieManager2Mysql
 
             // PackageImage
             // Visibleの場合のみ表示
-            FileInfo fileInfoPackage = image.GetDefaultPackageFileInfo();
+            FileInfo fileInfoPackage = image.PackageFileInfo;
 
             if (fileInfoPackage != null && fileInfoPackage.Exists)
             {
-                string path = myMovieContents.GetExistPath(myTargetGroup);
-                if (path != null)
-                {
-                    txtStatusBar.Text = myMovieContents.ExistMovie[0];
-                    txtStatusBarFileLength.Text = CommonMethod.GetDisplaySize(myMovieContents.Size);
-                    imagePackage.Source = ImageMethod.GetImageStream(fileInfoPackage.FullName);
-                }
+                txtStatusBar.Text = myMovieContents.ExistMovie[0];
+                txtStatusBarFileLength.Text = CommonMethod.GetDisplaySize(myMovieContents.Size);
+                imagePackage.Source = ImageMethod.GetImageStream(fileInfoPackage.FullName);
             }
             else
             {
@@ -461,11 +457,11 @@ namespace wpfMovieManager2Mysql
             //       true  サムネイル画像を表示
             //       false Dirがあれば、Dir内の画像、無い場合はパッケージを表示、ImagePackageを非表示
             //   Kind == 2 ( Site )
-            if (image.IsThumbnail())
+            if (image.IsThumbnail)
             {
                 List<FileInfo> listFileInfo = image.listImageFileInfo;
 
-                if (listFileInfo != null && listFileInfo.Count >= 1)
+                if (listFileInfo != null && listFileInfo.Count == 1)
                 {
                     imageSitesImageOne.Source = ImageMethod.GetImageStream(listFileInfo[0].FullName);
                     imageSitesImageOne.ToolTip = listFileInfo[0].Name;
@@ -473,7 +469,7 @@ namespace wpfMovieManager2Mysql
                     imageSitesImageThree.Visibility = Visibility.Collapsed;
                     imageSitesImageFour.Visibility = Visibility.Collapsed;
 
-                    imageSitesImageOne.SetValue(Grid.RowSpanProperty, 2);
+                    imageSitesImageOne.SetValue(Grid.RowSpanProperty, 4);
                     imageSitesImageOne.SetValue(Grid.ColumnSpanProperty, 2);
 
                     BitmapImage bitmapImage = (BitmapImage)imageSitesImageOne.Source;
@@ -481,9 +477,58 @@ namespace wpfMovieManager2Mysql
                     imageSitesImageOne.Height = (imageSitesImageOne.Width / bitmapImage.Width) * bitmapImage.Height;
                     imageSitesImageOne.Stretch = Stretch.Uniform;
                 }
+                else if (listFileInfo.Count > 1)
+                {
+                    imageSitesImageOne.SetValue(Grid.RowSpanProperty, 1);
+                    imageSitesImageOne.SetValue(Grid.ColumnSpanProperty, 2);
+
+                    imageSitesImageOne.Width = imageSitesImageTwo.Width;
+                    imageSitesImageOne.Height = imageSitesImageTwo.Height;
+
+                    if (listFileInfo.Count >= 1)
+                    {
+                        imageSitesImageOne.Source = ImageMethod.GetImageStream(listFileInfo[0].FullName);
+                        imageSitesImageOne.ToolTip = listFileInfo[0].Name;
+                        imageSitesImageOne.Visibility = Visibility.Visible;
+                    }
+                    if (listFileInfo.Count >= 2)
+                    {
+                        imageSitesImageTwo.SetValue(Grid.RowProperty, 1);
+                        imageSitesImageTwo.SetValue(Grid.ColumnSpanProperty, 2);
+                        imageSitesImageTwo.Source = ImageMethod.GetImageStream(listFileInfo[1].FullName);
+                        imageSitesImageTwo.ToolTip = listFileInfo[1].Name;
+                        imageSitesImageTwo.Visibility = Visibility.Visible;
+                    }
+                    else
+                        imageSitesImageTwo.Visibility = Visibility.Collapsed;
+
+                    if (listFileInfo.Count >= 3)
+                    {
+                        imageSitesImageThree.SetValue(Grid.RowProperty, 2);
+                        imageSitesImageThree.SetValue(Grid.ColumnSpanProperty, 2);
+                        imageSitesImageThree.Source = ImageMethod.GetImageStream(listFileInfo[2].FullName);
+                        imageSitesImageThree.ToolTip = listFileInfo[2].Name;
+                        imageSitesImageThree.Visibility = Visibility.Visible;
+                    }
+                    else
+                        imageSitesImageThree.Visibility = Visibility.Collapsed;
+
+                    if (listFileInfo.Count >= 4)
+                    {
+                        imageSitesImageFour.SetValue(Grid.RowProperty, 3);
+                        imageSitesImageFour.SetValue(Grid.ColumnSpanProperty, 3);
+                        imageSitesImageFour.Source = ImageMethod.GetImageStream(listFileInfo[3].FullName);
+                        imageSitesImageFour.ToolTip = listFileInfo[3].Name;
+                        imageSitesImageFour.Visibility = Visibility.Visible;
+                    }
+                    else
+                        imageSitesImageFour.Visibility = Visibility.Collapsed;
+
+                }
             }
             else
             {
+                // dispinfoSelectContents.IsSite()
                 List<FileInfo> listFileInfo = image.listImageFileInfo;
                 txtbImageInfo.Text = image.DisplayPage;
 
@@ -565,39 +610,15 @@ namespace wpfMovieManager2Mysql
             else
                 return;
 
-            MovieGroup matchGroup = ColViewMovieGroup.GetMatchDataByContents(dispinfoSelectContents);
-            if (matchGroup != null)
-            {
-                //dispinfoSelectContents.Label = System.IO.Path.Combine(matchGroup.Path, dispinfoSelectContents.Name);
-                dispinfoSelectContents.Label = matchGroup.Path;
-            }
-
-            if (dispinfoSelectContents.Name.IndexOf("?") >= 0)
-            {
-                FileInfo fileInfo = null;
-                string searchPattern = "*[" + dispinfoSelectContents.ProductNumber + " " + dispinfoSelectContents.SellDate.ToString("yyyyMMdd") + "].jpg";
-                string[] arrFiles = Directory.GetFiles(dispinfoSelectContents.Label, searchPattern, System.IO.SearchOption.TopDirectoryOnly);
-                if (arrFiles.Length >= 1)
-                {
-                    fileInfo = new FileInfo(arrFiles[0]);
-                    dispinfoSelectContents.Name = fileInfo.Name.Replace(fileInfo.Extension, "");
-                }
-            }
-
-            dispinfoTargetGroupBySelectContents = ColViewMovieGroup.GetMatchDataByContents(dispinfoSelectContents);
-
-            if (dispinfoTargetGroupBySelectContents == null)
-                txtStatusBar.Text = "" + dispinfoSelectContents.Label + "に一致するグループが存在しませんでした";
+            dispinfoSelectContents.SetMovieInfo();
 
             OnDisplayImage(dispinfoSelectContents, dispinfoTargetGroupBySelectContents);
-
             if (dispinfoContentsVisibleKind == CONTENTS_VISIBLE_KIND_DETAIL)
             {
                 if (dispinfoSelectContents == null)
                     return;
 
-                if (dispinfoSelectContents.Kind == MovieContents.KIND_FILE
-                    || dispinfoSelectContents.Kind == MovieContents.KIND_CONTENTS)
+                if (dispinfoSelectContents.IsSite() == false)
                 {
                     lgridSiteDetail.Visibility = Visibility.Collapsed;
                     lgridFileDetail.Visibility = Visibility.Visible;
@@ -614,18 +635,18 @@ namespace wpfMovieManager2Mysql
 
                 txtSiteDetailContentsName.Text = dispinfoSelectContents.Name;
                 txtSiteDetailContentsTag.Text = dispinfoSelectContents.Tag;
-                string path = dispinfoSelectContents.GetExistPath(dispinfoTargetGroupBySelectContents);
-                txtSiteDetailContentsPath.Text = path;
+                txtSiteDetailContentsPath.Text = dispinfoSelectContents.Path;
                 txtSiteDetailContentsComment.Text = dispinfoSelectContents.Comment;
 
-                if (path != null)
+                string sitePathname = Path.Combine(dispinfoSelectContents.Path, dispinfoSelectContents.Name);
+                if (Directory.Exists(sitePathname))
                 {
                     ScreenDisableBorderSiteDetail.Width = 0;
                     ScreenDisableBorderSiteDetail.Height = 0;
                     ScreenDisableBorderImageContents.Width = 0;
                     ScreenDisableBorderImageContents.Height = 0;
 
-                    txtSiteDetailContentsPath.Text = path;
+                    txtSiteDetailContentsPath.Text = sitePathname;
                     txtSiteDetailContentsComment.Text = dispinfoSelectContents.Comment;
                     ColViewSiteDetail = new SiteDetail(txtSiteDetailContentsPath.Text);
 
@@ -636,7 +657,7 @@ namespace wpfMovieManager2Mysql
 
                     imageSiteDetail.Source = ImageMethod.GetImageStream(ColViewSiteDetail.StartImagePathname);
 
-                    targetList = new contents.TargetList(path);
+                    targetList = new contents.TargetList(sitePathname);
                     if (targetList.DisplayTargetFiles != null)
                     {
                         lstSiteDetailSelectedList.ItemsSource = targetList.DisplayTargetFiles;
@@ -1143,7 +1164,7 @@ namespace wpfMovieManager2Mysql
 
             MovieContents data = dispinfoSelectContents;
             data.Name = textbox.Text;
-            string path = data.GetExistPath(dispinfoTargetGroupBySelectContents);
+            string path = data.Path;
 
             if (path == null)
             {
@@ -1259,7 +1280,7 @@ namespace wpfMovieManager2Mysql
             if (myTextBoxTag != null && myTextBoxTag.Text.Trim().Length > 0)
                 data.Tag = myTextBoxTag.Text;
             if (myTextBoxLabel != null && myTextBoxLabel.Text.Trim().Length > 0)
-                data.Label = myTextBoxLabel.Text;
+                data.StoreLabel = myTextBoxLabel.Text;
             if (myTextBoxSellDate != null && myTextBoxSellDate.Text.Trim().Length > 0)
                 data.SellDate = Convert.ToDateTime(myTextBoxSellDate.Text);
             if (myTextBoxProductNumber != null && myTextBoxProductNumber.Text.Trim().Length > 0)
@@ -1289,7 +1310,7 @@ namespace wpfMovieManager2Mysql
 
             if (Directory.Exists(txtFileDetailContentsLabel.Text))
             {
-                if (dispinfoSelectContents.Label != txtFileDetailContentsLabel.Text)
+                if (dispinfoSelectContents.StoreLabel != txtFileDetailContentsLabel.Text)
                     txtFileDetailContentsLabel.Background = new LinearGradientBrush(Colors.LightPink, Colors.LightPink, 0.5);
                 else
                     txtFileDetailContentsLabel.Background = null;
@@ -1478,12 +1499,12 @@ namespace wpfMovieManager2Mysql
             ColViewFileDetail.Refresh();
 
             // ファイル情報は反映、DB更新
-            dispinfoSelectContents.RefrectFileInfoAndDbUpdate(ColViewFileDetail, dbcon);
+            //dispinfoSelectContents.RefrectFileInfoAndDbUpdate(ColViewFileDetail, dbcon);
 
             // ファイル情報の各Controlへの表示を更新
             txtFileDetailContentsName.Text = dispinfoSelectContents.Name;
             txtFileDetailContentsTag.Text = dispinfoSelectContents.Tag;
-            txtFileDetailContentsLabel.Text = dispinfoSelectContents.Label;
+            txtFileDetailContentsLabel.Text = dispinfoSelectContents.StoreLabel;
             txtFileDetailContentsSellDate.Text = dispinfoSelectContents.SellDate.ToString("yyyy/MM/dd");
             txtFileDetailContentsProductNumber.Text = dispinfoSelectContents.ProductNumber;
             txtFileDetailContentsExtension.Text = dispinfoSelectContents.Extension;
