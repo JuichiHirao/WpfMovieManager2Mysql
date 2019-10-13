@@ -85,12 +85,15 @@
     <Compile Include="clsMovieActress.cs" />
     <Compile Include="clsMovieContents.cs" />
     <Compile Include="clsMovieContentsFilterAndSort.cs" />
+    <Compile Include="collection\StoreCollection.cs" />
     <Compile Include="common\ClipBoard.cs" />
     <Compile Include="common\CommonMethod.cs" />
     <Compile Include="common\FileContents.cs" />
     <Compile Include="common\ImageMethod.cs" />
     <Compile Include="common\Player.cs" />
     <Compile Include="contents\TargetList.cs" />
+    <Compile Include="data\MovieGroupData.cs" />
+    <Compile Include="data\StoreGroupInfoData.cs" />
     <Compile Include="detail\BaseDetail.cs" />
     <Compile Include="detail\FileCopyDetail.cs" />
     <Compile Include="detail\FileDetail.cs" />
@@ -98,6 +101,7 @@
     <Compile Include="DynamicJson.cs" />
     <Compile Include="MySqlDbConnection.cs" />
     <Compile Include="MySqlDbExportCommon.cs" />
+    <Compile Include="service\StoreService.cs" />
     <Compile Include="UI\clsRowColorConverter.cs" />
     <Compile Include="winSample.xaml.cs">
       <DependentUpon>winSample.xaml</DependentUpon>
@@ -111,7 +115,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="clsMovieContentsParent.cs" />
-    <Compile Include="clsMovieGroup.cs" />
     <Compile Include="clsTemporaryTools.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
@@ -170,5 +173,6 @@
   <ItemGroup>
     <Resource Include="wpfMovieManager2.ico" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

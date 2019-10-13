@@ -2,7 +2,7 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-                    xmlns:local="clr-namespace:wpfMovieManager2Mysql"
+                    xmlns:local="clr-namespace:WpfMovieManager2Mysql"
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <local:RowColorConverter x:Key="rowColorConverter" />
     <local:NullImageConverter x:Key="nullImageConverter"/>
@@ -51,9 +51,9 @@
     <XmlDataProvider x:Key="formctrlAddGroupKind" >
         <x:XData>
             <Kind xmlns="">
-                <KindData DbValue="1" DisplayName="1:DIR" />
-                <KindData DbValue="3" DisplayName="3:SITE" />
-                <KindData DbValue="4" DisplayName="4:ACTRESS" />
+                <KindData DbValue="file" DisplayName="1:DIR" />
+                <KindData DbValue="site" DisplayName="3:SITE" />
+                <KindData DbValue="actress" DisplayName="4:ACTRESS" />
             </Kind>
         </x:XData>
     </XmlDataProvider>

@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using WpfMovieManager2Mysql;
 
-namespace wpfMovieManager2Mysql.detail
+namespace WpfMovieManager2Mysql.detail
 {
     abstract public class BaseDetail
     {

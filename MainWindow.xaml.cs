@@ -8,7 +8,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media.Imaging;
 using Microsoft.VisualBasic.FileIO;
-using wpfMovieManager2Mysql.common;
+using WpfMovieManager2Mysql.common;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -19,8 +19,10 @@ using System.Windows.Data;
 using System.Text.RegularExpressions;
 using System.Text;
 using WpfMovieManager2Mysql;
+using WpfMovieManager2.collection;
+using WpfMovieManager2.data;
 
-namespace wpfMovieManager2Mysql
+namespace WpfMovieManager2Mysql
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -43,8 +45,10 @@ namespace wpfMovieManager2Mysql
 
         common.Image image = null;
 
+        StoreCollection ColViewStore;
+
         MovieContentsFilterAndSort ColViewMovieContents;
-        MovieGroupFilterAndSorts ColViewMovieGroup;
+        //MovieGroupFilterAndSorts ColViewMovieGroup;
         SiteDetail ColViewSiteDetail;
         detail.FileDetail ColViewFileDetail;
 
@@ -60,8 +64,8 @@ namespace wpfMovieManager2Mysql
         double dispctrlContentsWidth = 800;
 
         MovieContents dispinfoSelectContents = null;
-        MovieGroup dispinfoTargetGroupBySelectContents = null;
-        MovieGroup dispinfoSelectGroup = null;
+        MovieGroupData dispinfoTargetGroupBySelectContents = null;
+        MovieGroupData dispinfoSelectGroup = null;
 
         BackgroundWorker bgworkerFileDetailCopy;
         Stopwatch stopwatchFileDetailCopy = new Stopwatch();
@@ -84,13 +88,13 @@ namespace wpfMovieManager2Mysql
             try
             {
                 ColViewMovieContents = new MovieContentsFilterAndSort(dbcon);
-                ColViewMovieGroup = new MovieGroupFilterAndSorts(dbcon);
+                ColViewStore = new StoreCollection();
 
                 dgridMovieContents.ItemsSource = ColViewMovieContents.ColViewListMovieContents;
-                dgridMovieGroup.ItemsSource = ColViewMovieGroup.ColViewListMovieGroup;
+                dgridMovieGroup.ItemsSource = ColViewStore.ColViewListData;      //ColViewMovieGroupData.ColViewListMovieGroup;
                 dgridMovieGroup.Visibility = Visibility.Collapsed;
 
-                cmbSiteName.ItemsSource = ColViewMovieGroup.listSiteName;
+                //cmbSiteName.ItemsSource = ColViewMovieGroupData.listSiteName;
             }
             catch (Exception ex)
             {
@@ -188,7 +192,7 @@ namespace wpfMovieManager2Mysql
                 if (!dispinfoIsGroupAddVisible)
                     lgridMovieGroup.RowDefinitions[1].Height = new GridLength(0);
                 else
-                    lgridMovieGroup.RowDefinitions[1].Height = new GridLength(300);
+                    lgridMovieGroup.RowDefinitions[1].Height = new GridLength(370);
             }
             else
             {
@@ -286,8 +290,8 @@ namespace wpfMovieManager2Mysql
                 sortOrder = GetSortOrder(btnSortGroupOrder, isReverse);
                 sortColumns = Convert.ToString(cmbSortGroup.SelectedValue);
 
-                ColViewMovieGroup.SetSort(Convert.ToString(cmbSortGroup.SelectedValue), sortOrder);
-                ColViewMovieGroup.Execute(MovieGroupFilterAndSorts.EXECUTE_MODE_NORMAL);
+                ColViewStore.SetSort(Convert.ToString(cmbSortGroup.SelectedValue), sortOrder);
+                ColViewStore.Execute();
             }
             else
             {
@@ -295,7 +299,7 @@ namespace wpfMovieManager2Mysql
                 sortColumns = Convert.ToString(cmbContentsSort.SelectedValue);
 
                 ColViewMovieContents.SetSort(Convert.ToString(cmbContentsSort.SelectedValue), sortOrder);
-                ColViewMovieGroup.Execute(MovieGroupFilterAndSorts.EXECUTE_MODE_NORMAL);
+                ColViewStore.Execute();
             }
         }
         private ListSortDirection GetSortOrder(Button myButton, bool myIsReverse)
@@ -364,25 +368,25 @@ namespace wpfMovieManager2Mysql
             }
 
             dispinfoGroupButton =  clickButton.Content.ToString();
-            int kind = MovieGroups.KindByButton[dispinfoGroupButton];
+            string typeName = CommonMethod.ToggleButtonType[dispinfoGroupButton];
             dispinfoIsGroupVisible = true;
 
             ColViewMovieContents.Clear();
             string sortColumns = Convert.ToString(cmbContentsSort.SelectedValue);
             ColViewMovieContents.SetSort(sortColumns, GetSortOrder(btnSortOrder, false));
 
-            ColViewMovieGroup.SetSort("CreatedDate", ListSortDirection.Descending);
-            ColViewMovieGroup.SetFilterKind(kind);
+            ColViewStore.SetSort("UpdatedAt", ListSortDirection.Descending);
+            ColViewStore.SetType(typeName);
             if (dispinfoGroupButton != "S")
-                ColViewMovieGroup.SetSiteName("");
-            ColViewMovieGroup.Execute(MovieGroupFilterAndSorts.EXECUTE_MODE_NORMAL);
+                ColViewStore.SetSiteName("");
+            ColViewStore.Execute();
 
             LayoutChange();
         }
 
         private void dgridMovieGroup_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            dispinfoSelectGroup = (MovieGroup)dgridMovieGroup.SelectedItem;
+            dispinfoSelectGroup = (MovieGroupData)dgridMovieGroup.SelectedItem;
             if (dispinfoSelectGroup == null)
                 return;
 
@@ -390,7 +394,7 @@ namespace wpfMovieManager2Mysql
             OnDisplayImage(null, dispinfoTargetGroupBySelectContents);
 
             // 選択されているグループで表示
-            GroupFilesInfo filesInfo = ColViewMovieContents.ClearAndExecute(ColViewMovieGroup.FilterKind, dispinfoSelectGroup);
+            StoreGroupInfoData filesInfo = ColViewMovieContents.ClearAndExecute(dispinfoSelectGroup);
 
             this.Title = "未評価 [" + filesInfo.Unrated + "/" + filesInfo.FileCount + "]  Size [" + CommonMethod.GetDisplaySize(filesInfo.Size) + "]";
             txtbGroupInfo.Text = "未評価 [" + filesInfo.Unrated + "/" + filesInfo.FileCount + "]  Size [" + CommonMethod.GetDisplaySize(filesInfo.Size) + "]";
@@ -398,8 +402,8 @@ namespace wpfMovieManager2Mysql
 
         private void txtSearchGroup_TextChanged(object sender, TextChangedEventArgs e)
         {
-            ColViewMovieGroup.SetSearchText(txtSearchGroup.Text);
-            ColViewMovieGroup.Execute(MovieGroupFilterAndSorts.EXECUTE_MODE_NORMAL);
+            ColViewStore.SetSearchText(txtSearchGroup.Text);
+            ColViewStore.Execute();
         }
 
         private void OnCloseGroupFilter_Click(object sender, RoutedEventArgs e)
@@ -416,15 +420,15 @@ namespace wpfMovieManager2Mysql
         {
             string selectSiteName = Convert.ToString(cmbSiteName.SelectedItem);
 
-            ColViewMovieGroup.SetSiteName(selectSiteName);
-            ColViewMovieGroup.Execute(MovieGroupFilterAndSorts.EXECUTE_MODE_NATURAL_COMPARE);
+            ColViewStore.SetSiteName(selectSiteName);
+            ColViewStore.Execute();
 
             ColViewMovieContents.Clear();
             ColViewMovieContents.SetSiteContents(selectSiteName, "");
             ColViewMovieContents.Execute();
         }
 
-        private void OnDisplayImage(MovieContents myMovieContents, MovieGroup myTargetGroup)
+        private void OnDisplayImage(MovieContents myMovieContents, MovieGroupData myTargetGroup)
         {
             // パラメータがnullの場合は画像表示を全てクリア
             if (myMovieContents == null)
@@ -528,7 +532,6 @@ namespace wpfMovieManager2Mysql
             }
             else
             {
-                // dispinfoSelectContents.IsSite()
                 List<FileInfo> listFileInfo = image.listImageFileInfo;
                 txtbImageInfo.Text = image.DisplayPage;
 
@@ -618,7 +621,7 @@ namespace wpfMovieManager2Mysql
                 if (dispinfoSelectContents == null)
                     return;
 
-                if (dispinfoSelectContents.IsSite() == false)
+                if (dispinfoSelectContents.Type != "site")
                 {
                     lgridSiteDetail.Visibility = Visibility.Collapsed;
                     lgridFileDetail.Visibility = Visibility.Visible;
@@ -898,21 +901,23 @@ namespace wpfMovieManager2Mysql
                 if (dispinfoSelectGroup == null)
                     return;
 
-                txtAddGroupName.Text = dispinfoSelectGroup.Name;
-                txtAddGroupExplanation.Text = dispinfoSelectGroup.Explanation;
                 txtAddGroupLabel.Text = dispinfoSelectGroup.Label;
-                cmbAddGroupKind.SelectedValue = dispinfoSelectGroup.Kind;
+                txtAddGroupName1.Text = dispinfoSelectGroup.Name1;
+                txtAddGroupName2.Text = dispinfoSelectGroup.Name2;
+                txtAddGroupPath.Text = dispinfoSelectGroup.Path;
+                cmbAddGroupKind.SelectedValue = dispinfoSelectGroup.Type;
                 txtAddGroupId.Text = Convert.ToString(dispinfoSelectGroup.Id);
                 txtbAddGroupMode.Text = "Edit";
             }
             else
             {
-                txtAddGroupName.Text = "";
-                txtAddGroupExplanation.Text = "";
                 txtAddGroupLabel.Text = "";
+                txtAddGroupName1.Text = "";
+                txtAddGroupName2.Text = "";
+                txtAddGroupPath.Text = "";
                 cmbAddGroupKind.SelectedValue = null;
                 txtAddGroupId.Text = "";
-                txtbAddGroupMode.Text = "Regist";
+                txtbAddGroupMode.Text = "Register";
             }
             dispinfoIsGroupAddVisible = true;
             LayoutChange();
@@ -927,7 +932,7 @@ namespace wpfMovieManager2Mysql
             if (result == MessageBoxResult.Cancel)
                 return;
 
-            ColViewMovieGroup.DbDelete(dispinfoSelectGroup, null);
+            ColViewStore.Delete(dispinfoSelectGroup);
             dispinfoSelectGroup = null;
         }
 
@@ -941,13 +946,13 @@ namespace wpfMovieManager2Mysql
             //if (result == MessageBoxResult.Cancel)
             //    return;
 
-            if (dispinfoSelectGroup.Kind == 3)
+            if (dispinfoSelectGroup.Type == "site")
             {
-                if (Directory.Exists(dispinfoSelectGroup.Explanation))
+                if (Directory.Exists(dispinfoSelectGroup.Path))
                 {
-                    string[] arrDir = Directory.GetDirectories(dispinfoSelectGroup.Explanation);
+                    string[] arrDir = Directory.GetDirectories(dispinfoSelectGroup.Path);
                     ColViewMovieContents.Clear();
-                    ColViewMovieContents.SetSiteContents(dispinfoSelectGroup.Label, dispinfoSelectGroup.Name);
+                    ColViewMovieContents.SetSiteContents(dispinfoSelectGroup.Name1, dispinfoSelectGroup.Name2);
                     ColViewMovieContents.IsFilterGroupCheck = true;
 
                     ColViewMovieContents.Execute();
@@ -973,10 +978,10 @@ namespace wpfMovieManager2Mysql
                             contents.SiteName = dispinfoSelectGroup.Label;
                             contents.Name = dirinfo.Name;
                             contents.Kind = MovieContents.KIND_SITECHK_UNREGISTERED;
-                            contents.Label = new DirectoryInfo(dispinfoSelectGroup.Explanation).Name; // Filterにかからなくなるので格納
-                            contents.ParentPath = new DirectoryInfo(dispinfoSelectGroup.Explanation).Name;
+                            contents.Label = new DirectoryInfo(dispinfoSelectGroup.Path).Name; // Filterにかからなくなるので格納
+                            contents.ParentPath = new DirectoryInfo(dispinfoSelectGroup.Path).Name;
 
-                            SiteDetail s = new SiteDetail(Path.Combine(dispinfoSelectGroup.Explanation, dirinfo.Name));
+                            SiteDetail s = new SiteDetail(Path.Combine(dispinfoSelectGroup.Path, dirinfo.Name));
                             contents.MovieCount = Convert.ToString(s.MovieCount);
                             contents.PhotoCount = Convert.ToString(s.ImageCount);
                             contents.Extension = s.Extention;
@@ -988,7 +993,7 @@ namespace wpfMovieManager2Mysql
 
                     foreach (MovieContents contents in ColViewMovieContents.ColViewListMovieContents)
                     {
-                        string contentsFilename = Path.Combine(dispinfoSelectGroup.Explanation, contents.Name);
+                        string contentsFilename = Path.Combine(dispinfoSelectGroup.Path, contents.Name);
 
                         if (!Directory.Exists(contentsFilename))
                             contents.Kind = MovieContents.KIND_SITECHK_NOTEXIST;
@@ -1010,44 +1015,45 @@ namespace wpfMovieManager2Mysql
                 return;
             }
 
-            int kind = Convert.ToInt32(cmbAddGroupKind.SelectedValue);
+            string typeName = Convert.ToString(cmbAddGroupKind.SelectedValue);
 
-            if (kind == MovieGroup.KIND_DIR)
+            if (typeName == "file")
             {
-                DirectoryInfo dir = new DirectoryInfo(txtAddGroupExplanation.Text);
+                DirectoryInfo dir = new DirectoryInfo(txtAddGroupPath.Text);
 
                 if (!dir.Exists)
                 {
-                    MessageBox.Show("説明に指定されているフォルダが存在しません");
+                    MessageBox.Show("Pathに指定されているフォルダが存在しません");
                     return;
                 }
             }
 
-            if (txtbAddGroupMode.Text == "Regist")
+            if (txtbAddGroupMode.Text == "Register")
             {
-                MovieGroup registerData = new MovieGroup();
-                registerData.Name = txtAddGroupName.Text;
-                registerData.Explanation = txtAddGroupExplanation.Text;
+                MovieGroupData registerData = new MovieGroupData();
                 registerData.Label = txtAddGroupLabel.Text;
-                registerData.Kind = kind;
+                registerData.Name1 = txtAddGroupName1.Text;
+                registerData.Name2 = txtAddGroupName2.Text;
+                registerData.Path = txtAddGroupPath.Text;
+                registerData.Type = typeName;
 
-                registerData = MovieGroups.DbExport(registerData, dbcon);
-                ColViewMovieGroup.Add(registerData);
-
-                ColViewMovieGroup.Refresh(); // .Execute(MovieGroupFilterAndSorts.EXECUTE_MODE_NORMAL);
+                ColViewStore.Add(registerData);
+                ColViewStore.Refresh();
             }
             else
             {
-                dispinfoSelectGroup.Name = txtAddGroupName.Text;
-                dispinfoSelectGroup.Explanation = txtAddGroupExplanation.Text;
                 dispinfoSelectGroup.Label = txtAddGroupLabel.Text;
+                dispinfoSelectGroup.Name1 = txtAddGroupName1.Text;
+                dispinfoSelectGroup.Name2 = txtAddGroupName2.Text;
+                dispinfoSelectGroup.Path = txtAddGroupPath.Text;
 
-                dispinfoSelectGroup.DbUpdate(dbcon);
+                ColViewStore.Update(dispinfoSelectGroup);
             }
 
-            txtAddGroupName.Text = "";
-            txtAddGroupExplanation.Text = "";
             txtAddGroupLabel.Text = "";
+            txtAddGroupName1.Text = "";
+            txtAddGroupName2.Text = "";
+            txtAddGroupPath.Text = "";
             cmbAddGroupKind.SelectedValue = null;
             txtAddGroupId.Text = "";
             txtbAddGroupMode.Text = "";
@@ -1062,7 +1068,7 @@ namespace wpfMovieManager2Mysql
 
             if (dispinfoSelectGroup == null || textbox.Text.Length <= 0)
             {
-                txtbAddGroupMode.Text = "Regist";
+                txtbAddGroupMode.Text = "Register";
             }
             else
             {
@@ -1072,38 +1078,39 @@ namespace wpfMovieManager2Mysql
                     if (dispinfoSelectGroup.Id == id)
                         txtbAddGroupMode.Text = "Edit";
                     else
-                        txtbAddGroupMode.Text = "Regist";
+                        txtbAddGroupMode.Text = "Register";
                 }
                 catch (Exception)
                 {
-                    txtbAddGroupMode.Text = "Regist";
+                    txtbAddGroupMode.Text = "Register";
                 }
             }
         }
 
         private void btnAddGroupCheck_Click(object sender, RoutedEventArgs e)
         {
-            int kind = Convert.ToInt32(cmbAddGroupKind.SelectedValue);
+            string typeName = Convert.ToString(cmbAddGroupKind.SelectedValue);
 
-            if (kind == MovieGroup.KIND_DIR)
+            if (typeName == "file")
             {
-                DirectoryInfo dir = new DirectoryInfo(txtAddGroupExplanation.Text);
+                DirectoryInfo dir = new DirectoryInfo(txtAddGroupPath.Text);
 
                 if (!dir.Exists)
                 {
-                    MessageBox.Show("説明に指定されているフォルダが存在しません");
+                    MessageBox.Show("Pathに指定されているフォルダが存在しません");
                     return;
                 }
             }
 
-            MovieGroup filterGroup = new MovieGroup();
-            filterGroup.Name = txtAddGroupName.Text;
-            filterGroup.Explanation = txtAddGroupExplanation.Text;
+            MovieGroupData filterGroup = new MovieGroupData();
             filterGroup.Label = txtAddGroupLabel.Text;
-            filterGroup.Kind = kind;
+            filterGroup.Name1 = txtAddGroupName1.Text;
+            filterGroup.Name2 = txtAddGroupName2.Text;
+            filterGroup.Path = txtAddGroupPath.Text;
+            filterGroup.Type = typeName;
 
             // 登録・更新で入力されているグループで表示
-            ColViewMovieContents.ClearAndExecute(ColViewMovieGroup.FilterKind, filterGroup);
+            ColViewMovieContents.ClearAndExecute(filterGroup);
         }
 
         private void menuitemAddTagContents_Click(object sender, RoutedEventArgs e)
@@ -1205,8 +1212,8 @@ namespace wpfMovieManager2Mysql
             }
             else
             {
-                string srcPath = Path.Combine(dispinfoTargetGroupBySelectContents.Explanation, dispinfoSelectContents.Name);
-                string destPath = Path.Combine(dispinfoTargetGroupBySelectContents.Explanation, txtSiteDetailContentsName.Text);
+                string srcPath = Path.Combine(dispinfoTargetGroupBySelectContents.Path, dispinfoSelectContents.Name);
+                string destPath = Path.Combine(dispinfoTargetGroupBySelectContents.Path, txtSiteDetailContentsName.Text);
 
                 if (Directory.Exists(srcPath) && !Directory.Exists(destPath))
                     isChangeDir = true;
@@ -1247,8 +1254,8 @@ namespace wpfMovieManager2Mysql
             }
             if (isChangeDir)
             {
-                string srcPath = Path.Combine(dispinfoSelectGroup.Explanation, dispinfoSelectContents.Name);
-                string destPath = Path.Combine(dispinfoSelectGroup.Explanation, txtSiteDetailContentsName.Text);
+                string srcPath = Path.Combine(dispinfoSelectGroup.Path, dispinfoSelectContents.Name);
+                string destPath = Path.Combine(dispinfoSelectGroup.Path, txtSiteDetailContentsName.Text);
 
                 if (Directory.Exists(srcPath) && !Directory.Exists(destPath))
                     Directory.Move(srcPath, destPath);

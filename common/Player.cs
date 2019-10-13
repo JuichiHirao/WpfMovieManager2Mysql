@@ -5,8 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WpfMovieManager2.data;
 
-namespace wpfMovieManager2Mysql.common
+namespace WpfMovieManager2Mysql.common
 {
     public class Player
     {
@@ -23,7 +24,7 @@ namespace wpfMovieManager2Mysql.common
         {
             return listPlayer;
         }
-        public void Execute(MovieContents myMovieContents, string myPlayerName, MovieGroup myGroup)
+        public void Execute(MovieContents myMovieContents, string myPlayerName, MovieGroupData myGroup)
         {
             string executePathname = "";
 

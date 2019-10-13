@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using WpfMovieManager2Mysql;
 
-namespace wpfMovieManager2Mysql
+namespace WpfMovieManager2Mysql
 {
     class MovieActresses
     {

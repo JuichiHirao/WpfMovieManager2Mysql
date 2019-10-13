@@ -2,17 +2,17 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Windows.Media.Imaging;
+using WpfMovieManager2.data;
 
-namespace wpfMovieManager2Mysql.common
+namespace WpfMovieManager2Mysql.common
 {
 
     class Image
     {
         MovieContents data;
 
-        int numberSheets;
         DirectoryInfo targetDirectory;
-        MovieGroup targetGroup;
+        MovieGroupData targetGroup;
 
         public FileInfo PackageFileInfo;
         public List<FileInfo> listImageFileInfo;
@@ -22,7 +22,7 @@ namespace wpfMovieManager2Mysql.common
         public string DisplayPage;
         public bool IsThumbnail = false;
 
-        public Image(MovieContents myData, MovieGroup myGroup)
+        public Image(MovieContents myData, MovieGroupData myGroup)
         {
             data = myData;
             listImageFileInfo = new List<FileInfo>();

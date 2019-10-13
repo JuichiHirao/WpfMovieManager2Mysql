@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using WpfMovieManager2Mysql;
 
-namespace wpfMovieManager2Mysql
+namespace WpfMovieManager2Mysql
 {
     class MovieContentsParent
     {
@@ -27,7 +27,7 @@ namespace wpfMovieManager2Mysql
                         + "    , tag, publish_date, file_date, file_count "
                         + "    , size, rating, c.comment, c.remark "
                         + "    , file_status "
-                        + "    , c.created_at, c.updated_at, s.path "
+                        + "    , c.created_at, c.updated_at, s.type, s.path "
                         + "  FROM contents as c "
                         + "    LEFT JOIN av.store as s "
                         + "      ON c.store_label = s.label";
@@ -66,7 +66,8 @@ namespace wpfMovieManager2Mysql
                         data.FileStatus = MySqlDbExportCommon.GetDbString(reader, 13);
                         data.CreatedAt = MySqlDbExportCommon.GetDbDateTime(reader, 14);
                         data.UpdatedAt = MySqlDbExportCommon.GetDbDateTime(reader, 15);
-                        data.Path = MySqlDbExportCommon.GetDbString(reader, 16);
+                        data.Type = MySqlDbExportCommon.GetDbString(reader, 16);
+                        data.Path = MySqlDbExportCommon.GetDbString(reader, 17);
 
                         listMContents.Add(data);
                     }

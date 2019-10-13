@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace wpfMovieManager2Mysql
+namespace WpfMovieManager2Mysql
 {
     /// <summary>
     /// App.xaml の相互作用ロジック

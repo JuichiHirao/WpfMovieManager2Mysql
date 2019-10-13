@@ -12,9 +12,9 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using wpfMovieManager2Mysql.common;
+using WpfMovieManager2Mysql.common;
 
-namespace wpfMovieManager2Mysql
+namespace WpfMovieManager2Mysql
 {
     /// <summary>
     /// Interaction logic for winSample.xaml

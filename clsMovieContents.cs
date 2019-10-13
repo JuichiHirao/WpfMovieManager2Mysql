@@ -12,7 +12,7 @@ using System.Windows.Media.Imaging;
 using WpfMovieManager2Mysql;
 using MySql.Data.MySqlClient;
 
-namespace wpfMovieManager2Mysql
+namespace WpfMovieManager2Mysql
 {
     public class MovieContents : INotifyPropertyChanged
     {
@@ -51,14 +51,6 @@ namespace wpfMovieManager2Mysql
             Comment = "";
         }
 
-        public bool IsSite()
-        {
-            if (StoreLabel.IndexOf(" ") > 0)
-                return true;
-
-            return false;
-        }
-
         public void SetMovieInfo()
         {
             if (String.IsNullOrEmpty(Path))
@@ -68,7 +60,7 @@ namespace wpfMovieManager2Mysql
 
             ExistList = "";
             // StoreLabelにスペース文字列が存在する場合、SiteContentsかもなので、listファイルをチェック
-            if (IsSite())
+            if (Type == "site")
             {
                 string listFilename = System.IO.Path.Combine(Path, "list");
 
@@ -81,7 +73,6 @@ namespace wpfMovieManager2Mysql
 
             Regex regexMov = new Regex(MovieContents.REGEX_MOVIE_EXTENTION, RegexOptions.IgnoreCase);
 
-            int cnt = 0;
             string[] tempExistMovie = null;
             try
             {
@@ -109,6 +100,8 @@ namespace wpfMovieManager2Mysql
 
         public string ExistList { get; set; }
         public string[] ExistMovie { get; set; }
+
+        public string Type { get; set; }
 
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
