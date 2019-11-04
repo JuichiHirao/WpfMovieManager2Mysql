@@ -56,8 +56,6 @@ namespace WpfMovieManager2Mysql
             if (String.IsNullOrEmpty(Path))
                 return;
 
-            string filePathname = System.IO.Path.Combine(Path, @Name + "*");
-
             ExistList = "";
             // StoreLabelにスペース文字列が存在する場合、SiteContentsかもなので、listファイルをチェック
             if (Type == "site")
@@ -70,8 +68,6 @@ namespace WpfMovieManager2Mysql
                     return;
                 }
             }
-
-            Regex regexMov = new Regex(MovieContents.REGEX_MOVIE_EXTENTION, RegexOptions.IgnoreCase);
 
             string[] tempExistMovie = null;
             try
@@ -480,10 +476,10 @@ namespace WpfMovieManager2Mysql
 
             MySqlParameter[] sqlparams = new MySqlParameter[2];
 
-            sqlparams[0] = new MySqlParameter("@pComment", SqlDbType.VarChar);
+            sqlparams[0] = new MySqlParameter("@pComment", MySqlDbType.VarChar);
             sqlparams[0].Value = myComment;
 
-            sqlparams[1] = new MySqlParameter("@pId", SqlDbType.Int);
+            sqlparams[1] = new MySqlParameter("@pId", MySqlDbType.Int32);
             sqlparams[1].Value = Id;
 
             myDbCon.SetParameter(sqlparams);

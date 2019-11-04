@@ -46,9 +46,10 @@ namespace WpfMovieManager2Mysql
         common.Image image = null;
 
         StoreCollection ColViewStore;
+        FavCollection ColViewFav;
 
         MovieContentsFilterAndSort ColViewMovieContents;
-        //MovieGroupFilterAndSorts ColViewMovieGroup;
+
         SiteDetail ColViewSiteDetail;
         detail.FileDetail ColViewFileDetail;
 
@@ -58,6 +59,7 @@ namespace WpfMovieManager2Mysql
         bool dispinfoIsGroupAddVisible = false; // グループ追加の表示を有効にする場合はtrue
         bool dispinfoIsContentsVisible = false;
         int dispinfoContentsVisibleKind = 0;
+        string dispinfoGroupVisibleType = "file";
         contents.TargetList targetList = null;
 
 
@@ -66,6 +68,7 @@ namespace WpfMovieManager2Mysql
         MovieContents dispinfoSelectContents = null;
         MovieGroupData dispinfoTargetGroupBySelectContents = null;
         MovieGroupData dispinfoSelectGroup = null;
+        FavData dispinfoSelectFavData = null;
 
         BackgroundWorker bgworkerFileDetailCopy;
         Stopwatch stopwatchFileDetailCopy = new Stopwatch();
@@ -89,12 +92,14 @@ namespace WpfMovieManager2Mysql
             {
                 ColViewMovieContents = new MovieContentsFilterAndSort(dbcon);
                 ColViewStore = new StoreCollection();
+                ColViewFav = new FavCollection();
 
                 dgridMovieContents.ItemsSource = ColViewMovieContents.ColViewListMovieContents;
-                dgridMovieGroup.ItemsSource = ColViewStore.ColViewListData;      //ColViewMovieGroupData.ColViewListMovieGroup;
+                dgridMovieGroup.ItemsSource = ColViewStore.ColViewListData;
                 dgridMovieGroup.Visibility = Visibility.Collapsed;
 
-                //cmbSiteName.ItemsSource = ColViewMovieGroupData.listSiteName;
+                dgridGroupFav.ItemsSource = ColViewFav.ColViewListData;
+                dgridGroupFav.Visibility = Visibility.Collapsed;
             }
             catch (Exception ex)
             {
@@ -179,20 +184,37 @@ namespace WpfMovieManager2Mysql
             {
                 dgridMovieGroup.Visibility = Visibility.Visible;
                 lgridMain.ColumnDefinitions[MAIN_COLUMN_NO_GROUP].Width = new GridLength(500);
+
                 dgridMovieGroup.Width = lgridMain.ColumnDefinitions[MAIN_COLUMN_NO_GROUP].Width.Value - 10;
                 ColWidth1Group = 500;
 
-                dgridMovieGroup_SelectionChanged(null, null);
+                if (dispinfoGroupVisibleType == "actress")
+                {
+                    lgridMovieGroup.Visibility = Visibility.Collapsed;
+                    lgridGroupFav.Visibility = Visibility.Visible;
 
-                if (dispinfoGroupButton == "S")
-                    cmbSiteName.Visibility = Visibility.Visible;
+                    if (!dispinfoIsGroupAddVisible)
+                        lgridGroupFav.RowDefinitions[1].Height = new GridLength(0);
+                    else
+                        lgridGroupFav.RowDefinitions[1].Height = new GridLength(370);
+                }
                 else
-                    cmbSiteName.Visibility = Visibility.Collapsed;
+                {
+                    lgridGroupFav.Visibility = Visibility.Collapsed;
+                    lgridMovieGroup.Visibility = Visibility.Visible;
 
-                if (!dispinfoIsGroupAddVisible)
-                    lgridMovieGroup.RowDefinitions[1].Height = new GridLength(0);
-                else
-                    lgridMovieGroup.RowDefinitions[1].Height = new GridLength(370);
+                    dgridMovieGroup_SelectionChanged(null, null);
+
+                    if (dispinfoGroupButton == "S")
+                        cmbSiteName.Visibility = Visibility.Visible;
+                    else
+                        cmbSiteName.Visibility = Visibility.Collapsed;
+
+                    if (!dispinfoIsGroupAddVisible)
+                        lgridMovieGroup.RowDefinitions[1].Height = new GridLength(0);
+                    else
+                        lgridMovieGroup.RowDefinitions[1].Height = new GridLength(370);
+                }
             }
             else
             {
@@ -290,7 +312,7 @@ namespace WpfMovieManager2Mysql
                 sortOrder = GetSortOrder(btnSortGroupOrder, isReverse);
                 sortColumns = Convert.ToString(cmbSortGroup.SelectedValue);
 
-                ColViewStore.SetSort(Convert.ToString(cmbSortGroup.SelectedValue), sortOrder);
+                ColViewStore.SetSort(sortColumns, sortOrder);
                 ColViewStore.Execute();
             }
             else
@@ -368,19 +390,28 @@ namespace WpfMovieManager2Mysql
             }
 
             dispinfoGroupButton =  clickButton.Content.ToString();
-            string typeName = CommonMethod.ToggleButtonType[dispinfoGroupButton];
+            dispinfoGroupVisibleType = CommonMethod.ToggleButtonType[dispinfoGroupButton];
             dispinfoIsGroupVisible = true;
 
             ColViewMovieContents.Clear();
             string sortColumns = Convert.ToString(cmbContentsSort.SelectedValue);
             ColViewMovieContents.SetSort(sortColumns, GetSortOrder(btnSortOrder, false));
 
-            ColViewStore.SetSort("UpdatedAt", ListSortDirection.Descending);
-            ColViewStore.SetType(typeName);
-            if (dispinfoGroupButton != "S")
-                ColViewStore.SetSiteName("");
-            ColViewStore.Execute();
-
+            if (dispinfoGroupVisibleType == "actress")
+            {
+                ColViewFav.SetSort("UpdatedAt", ListSortDirection.Descending);
+                ColViewFav.SetType(dispinfoGroupVisibleType);
+                dgridGroupFav.Visibility = Visibility.Visible;
+                ColViewFav.Execute();
+            }
+            else
+            {
+                ColViewStore.SetSort("UpdatedAt", ListSortDirection.Descending);
+                ColViewStore.SetType(dispinfoGroupVisibleType);
+                if (dispinfoGroupButton != "S")
+                    ColViewStore.SetSiteName("");
+                ColViewStore.Execute();
+            }
             LayoutChange();
         }
 
@@ -392,6 +423,22 @@ namespace WpfMovieManager2Mysql
 
             // 画像表示はクリア
             OnDisplayImage(null, dispinfoTargetGroupBySelectContents);
+
+            // 選択されているグループで表示
+            StoreGroupInfoData filesInfo = ColViewMovieContents.ClearAndExecute(dispinfoSelectGroup);
+
+            this.Title = "未評価 [" + filesInfo.Unrated + "/" + filesInfo.FileCount + "]  Size [" + CommonMethod.GetDisplaySize(filesInfo.Size) + "]";
+            txtbGroupInfo.Text = "未評価 [" + filesInfo.Unrated + "/" + filesInfo.FileCount + "]  Size [" + CommonMethod.GetDisplaySize(filesInfo.Size) + "]";
+        }
+
+        private void dgridGroupFav_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            dispinfoSelectFavData = (FavData)dgridGroupFav.SelectedItem;
+            if (dispinfoSelectFavData == null)
+                return;
+
+            // 画像表示はクリア
+            // OnDisplayImage(null, dispinfoTargetGroupBySelectContents);
 
             // 選択されているグループで表示
             StoreGroupInfoData filesInfo = ColViewMovieContents.ClearAndExecute(dispinfoSelectGroup);
@@ -890,6 +937,37 @@ namespace WpfMovieManager2Mysql
         {
             if (e.Key == Key.Delete)
                 btnSiteDetailRowDelete_Click(null, null);
+        }
+
+        private void OnAddGroupFavRegisterOrEdit(object sender, RoutedEventArgs e)
+        {
+            // ClickしたのがButtonでは無い場合は編集ボタンを押下されたと判断
+            Button button = sender as Button;
+            if (button == null)
+            {
+                if (dispinfoSelectGroup == null)
+                    return;
+
+                txtAddGroupLabel.Text = dispinfoSelectGroup.Label;
+                txtAddGroupName1.Text = dispinfoSelectGroup.Name1;
+                txtAddGroupName2.Text = dispinfoSelectGroup.Name2;
+                txtAddGroupPath.Text = dispinfoSelectGroup.Path;
+                cmbAddGroupKind.SelectedValue = dispinfoSelectGroup.Type;
+                txtAddGroupId.Text = Convert.ToString(dispinfoSelectGroup.Id);
+                txtbAddGroupMode.Text = "Edit";
+            }
+            else
+            {
+                txtAddGroupLabel.Text = "";
+                txtAddGroupName1.Text = "";
+                txtAddGroupName2.Text = "";
+                txtAddGroupPath.Text = "";
+                cmbAddGroupKind.SelectedValue = null;
+                txtAddGroupId.Text = "";
+                txtbAddGroupMode.Text = "Register";
+            }
+            dispinfoIsGroupAddVisible = true;
+            LayoutChange();
         }
 
         private void OnAddGroupRegistOrEdit(object sender, RoutedEventArgs e)

@@ -30,7 +30,8 @@ namespace WpfMovieManager2Mysql
                         + "    , c.created_at, c.updated_at, s.type, s.path "
                         + "  FROM contents as c "
                         + "    LEFT JOIN av.store as s "
-                        + "      ON c.store_label = s.label";
+                        + "      ON c.store_label = s.label"
+                        + "    ORDER BY c.created_at DESC";
 
             MySqlDataReader reader = null;
             try

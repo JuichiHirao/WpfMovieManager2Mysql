@@ -39,9 +39,9 @@ namespace WpfMovieManager2Mysql.common
                 //string tempPath = Path.GetTempPath();
 
                 if (myPlayerName.Equals("GOM"))
-                    executePathname = PlayList.MakeAsxFile(myMovieContents.Label, arrTargetExt, Path.GetTempPath(), myMovieContents.Name);
+                    executePathname = PlayList.MakeAsxFile(myMovieContents.Path, arrTargetExt, Path.GetTempPath(), myMovieContents.Name);
                 else if (myPlayerName.Equals("WMP"))
-                    executePathname = PlayList.MakeWplFile(myMovieContents.Label, arrTargetExt, Path.GetTempPath(), myMovieContents.Name);
+                    executePathname = PlayList.MakeWplFile(myMovieContents.Path, arrTargetExt, Path.GetTempPath(), myMovieContents.Name);
             }
             else if (myMovieContents.ExistMovie != null && myMovieContents.ExistMovie.Length == 1)
             {

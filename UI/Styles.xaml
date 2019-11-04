@@ -27,7 +27,7 @@
                 <KindData DbValue="FileDate" DisplayName="ファイル日付" />
                 <KindData DbValue="Rating" DisplayName="Rating" />
                 <KindData DbValue="Name" DisplayName="ファイル名" />
-                <KindData DbValue="UpdateDate" DisplayName="更新日" />
+                <KindData DbValue="UpdatedAt" DisplayName="更新日" />
                 <KindData DbValue="ProductNumber" DisplayName="品番" />
             </Kind>
         </x:XData>
@@ -44,7 +44,7 @@
         <x:XData>
             <Kind xmlns="">
                 <KindData DbValue="CreatedAt" DisplayName="Default（登録日）" />
-                <KindData DbValue="Name" DisplayName="Name" />
+                <KindData DbValue="Label" DisplayName="Label" />
             </Kind>
         </x:XData>
     </XmlDataProvider>
