@@ -8,7 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace wpfMovieManager2Mysql.detail
+namespace WpfMovieManager2Mysql.detail
 {
     class FileCopyDetail
     {

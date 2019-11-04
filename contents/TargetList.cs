@@ -4,10 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using wpfMovieManager2Mysql.common;
+using WpfMovieManager2Mysql.common;
 using System.Diagnostics;
 
-namespace wpfMovieManager2Mysql.contents
+namespace WpfMovieManager2Mysql.contents
 {
     class TargetList
     {

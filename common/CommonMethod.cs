@@ -1,16 +1,43 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Security;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
+using WpfMovieManager2.data;
 
-namespace wpfMovieManager2Mysql
+namespace WpfMovieManager2Mysql
 {
     class CommonMethod
     {
+        [SuppressUnmanagedCodeSecurity]
+        internal static class SafeNativeMethods
+        {
+            [DllImport("shlwapi.dll", CharSet = CharSet.Unicode)]
+            public static extern int StrCmpLogicalW(string psz1, string psz2);
+        }
+        public sealed class NaturalStringComparer : IComparer
+        {
+            public int Compare(object a, object b)
+            {
+                var lhs = (MovieGroupData)a;
+                var rhs = (MovieGroupData)b; //APPLY ALGORITHM LOGIC HERE
+                return SafeNativeMethods.StrCmpLogicalW(lhs.Path, rhs.Path);
+            }
+        }
+
+        public static Dictionary<string, string> ToggleButtonType = new Dictionary<string, string>()
+        {
+            { "D", "file" }, // Directory
+            { "S", "site" }, // Site
+            { "A", "actress" }  // Actress
+        };
+
         public static long GetLong(string myStrLong)
         {
             long data = 0;

@@ -5,8 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WpfMovieManager2.data;
 
-namespace wpfMovieManager2Mysql.common
+namespace WpfMovieManager2Mysql.common
 {
     public class Player
     {
@@ -23,13 +24,8 @@ namespace wpfMovieManager2Mysql.common
         {
             return listPlayer;
         }
-        public void Execute(MovieContents myMovieContents, string myPlayerName, MovieGroup myGroup)
+        public void Execute(MovieContents myMovieContents, string myPlayerName, MovieGroupData myGroup)
         {
-            string path = myMovieContents.GetExistPath(myGroup);
-
-            if (path == null)
-                return;
-
             string executePathname = "";
 
             // 複数ファイルのためPlayerに対応したリストを作成する
@@ -43,9 +39,9 @@ namespace wpfMovieManager2Mysql.common
                 //string tempPath = Path.GetTempPath();
 
                 if (myPlayerName.Equals("GOM"))
-                    executePathname = PlayList.MakeAsxFile(myMovieContents.Label, arrTargetExt, Path.GetTempPath(), myMovieContents.Name);
+                    executePathname = PlayList.MakeAsxFile(myMovieContents.Path, arrTargetExt, Path.GetTempPath(), myMovieContents.Name);
                 else if (myPlayerName.Equals("WMP"))
-                    executePathname = PlayList.MakeWplFile(myMovieContents.Label, arrTargetExt, Path.GetTempPath(), myMovieContents.Name);
+                    executePathname = PlayList.MakeWplFile(myMovieContents.Path, arrTargetExt, Path.GetTempPath(), myMovieContents.Name);
             }
             else if (myMovieContents.ExistMovie != null && myMovieContents.ExistMovie.Length == 1)
             {
@@ -53,17 +49,19 @@ namespace wpfMovieManager2Mysql.common
             }
             else
             {
-                SiteDetail ColViewSiteDetail = new SiteDetail(path);
+                if (String.IsNullOrEmpty(myMovieContents.ExistList))
+                    return;
 
-                string listFilename = Path.Combine(path, "list");
-                if (File.Exists(listFilename))
+                SiteDetail ColViewSiteDetail = new SiteDetail(myMovieContents.Path);
+
+                if (!String.IsNullOrEmpty(myMovieContents.ExistList))
                 {
                     List<FileInfo> files = new List<FileInfo>();
-                    StreamReader sreader = new StreamReader(listFilename);
+                    StreamReader sreader = new StreamReader(myMovieContents.ExistList);
                     string line = sreader.ReadLine();
                     while (line != null)
                     {
-                        string movieFilename = Path.Combine(path, line);
+                        string movieFilename = Path.Combine(myMovieContents.Path, line);
                         FileInfo fileinfo = new FileInfo(movieFilename);
                         if (fileinfo.Exists)
                             files.Add(fileinfo);

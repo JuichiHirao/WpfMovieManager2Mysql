@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Data.SqlClient;
+﻿using MySql.Data.MySqlClient;
+using System;
 using System.Diagnostics;
 
-namespace wpfMovieManager2Mysql
+namespace WpfMovieManager2Mysql
 {
-    class DbExportCommon
+    class MySqlDbExportCommon
     {
-        public static string GetDbString(SqlDataReader myReader, int myColumnNo)
+        public static string GetDbString(MySqlDataReader myReader, int myColumnNo)
         {
             string myData = "";
             try
@@ -23,7 +20,7 @@ namespace wpfMovieManager2Mysql
             }
             return myData;
         }
-        public static int GetDbInt(SqlDataReader myReader, int myColumnNo)
+        public static int GetDbInt(MySqlDataReader myReader, int myColumnNo)
         {
             int myData = 0;
             try
@@ -37,7 +34,7 @@ namespace wpfMovieManager2Mysql
             }
             return myData;
         }
-        public static DateTime GetDbDateTime(SqlDataReader myReader, int myColumnNo)
+        public static DateTime GetDbDateTime(MySqlDataReader myReader, int myColumnNo)
         {
             DateTime myData = new DateTime(1900, 1, 1);
             string data = "";
@@ -49,11 +46,11 @@ namespace wpfMovieManager2Mysql
                 {
                     datatype = myReader.GetDataTypeName(myColumnNo);
 
-                    if (datatype.Equals("datetime") || datatype.Equals("date"))
+                    if (datatype.ToLower().Equals("datetime") || datatype.ToLower().Equals("date"))
                     {
                         myData = myReader.GetDateTime(myColumnNo);
                     }
-                    else if (datatype.Equals("varchar"))
+                    else if (datatype.ToLower().Equals("varchar"))
                     {
                         data = myReader.GetString(myColumnNo);
                         //Debug.Print("varchar data [" + data + "]");
@@ -75,7 +72,7 @@ namespace wpfMovieManager2Mysql
             }
             return myData;
         }
-        public static long GetLong(SqlDataReader myReader, int myColumnNo)
+        public static long GetLong(MySqlDataReader myReader, int myColumnNo)
         {
             Decimal myDecimal = new Decimal();
             long myData = 0;
@@ -91,5 +88,6 @@ namespace wpfMovieManager2Mysql
             }
             return myData;
         }
+
     }
 }

@@ -5,17 +5,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Data;
+using WpfMovieManager2.data;
+using WpfMovieManager2Mysql;
 
-namespace wpfMovieManager2Mysql
+namespace WpfMovieManager2Mysql
 {
     public class MovieContentsFilterAndSort
     {
-        DbConnection dbcon;
+        MySqlDbConnection dbcon;
         public List<MovieContents> listMovieContens;
         public ICollectionView ColViewListMovieContents;
-
-        string sortItem;
-        ListSortDirection sortOrder;
 
         string FilterSearchText = "";
         string FilterLabel = "";
@@ -53,7 +52,7 @@ namespace wpfMovieManager2Mysql
             }
             return null;
         }
-        public MovieContentsFilterAndSort(DbConnection myDbCon)
+        public MovieContentsFilterAndSort(MySqlDbConnection myDbCon)
         {
             dbcon = myDbCon;
 
@@ -62,7 +61,7 @@ namespace wpfMovieManager2Mysql
 
         public MovieContentsFilterAndSort()
         {
-            dbcon = new DbConnection();
+            dbcon = new MySqlDbConnection();
 
             DataSet();
         }
@@ -114,27 +113,22 @@ namespace wpfMovieManager2Mysql
             FilterParentPath = myParentPath;
         }
         // dgridMovieGroup_SelectionChangedから呼び出し
-        public GroupFilesInfo ClearAndExecute(int myFilterKind, MovieGroup myGroupData)
+        public StoreGroupInfoData ClearAndExecute(MovieGroupData myGroupData)
         {
             Clear();
 
-            if (myGroupData.Kind == 1)
-                SetLabel(myGroupData.Explanation);
-            else if (myGroupData.Kind == 3)
-                SetSiteContents(myGroupData.Label, myGroupData.Name);
-            else if (myGroupData.Kind == 4)
-                SetActress(myGroupData.Name);
+            SetLabel(myGroupData.Label);
 
-            GroupFilesInfo FilesInfo = Execute();
+            StoreGroupInfoData infoData = Execute();
 
-            return FilesInfo;
+            return infoData;
         }
-        public GroupFilesInfo Execute()
+        public StoreGroupInfoData Execute()
         {
             string[] manyActress = null;
             string[] sepa = { "／" };
 
-            GroupFilesInfo FilesInfo = new GroupFilesInfo();
+            StoreGroupInfoData infoData = new StoreGroupInfoData();
 
             if (FilterActress.IndexOf("／") >= 0)
             {
@@ -192,7 +186,7 @@ namespace wpfMovieManager2Mysql
 
                 if (FilterLabel.Length > 0)
                 {
-                    if (data.Label.ToUpper() == FilterLabel.ToUpper())
+                    if (data.StoreLabel.ToUpper() == FilterLabel.ToUpper())
                         matchCount++;
                 }
 
@@ -226,10 +220,10 @@ namespace wpfMovieManager2Mysql
 
                 if (TargetMatchCount <= matchCount)
                 {
-                    FilesInfo.Size += data.Size;
-                    FilesInfo.FileCount++;
+                    infoData.Size += data.Size;
+                    infoData.FileCount++;
                     if (data.Rating <= 0)
-                        FilesInfo.Unrated++;
+                        infoData.Unrated++;
 
                     return true;
                 }
@@ -237,7 +231,7 @@ namespace wpfMovieManager2Mysql
                 return false;
             };
 
-            return FilesInfo;
+            return infoData;
         }
 
         public List<MovieContents> GetMatchData(string myTag)

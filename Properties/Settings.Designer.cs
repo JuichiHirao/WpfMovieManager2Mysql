@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace wpfMovieManager2Mysql.Properties
+namespace WpfMovieManager2Mysql.Properties
 {
 
 

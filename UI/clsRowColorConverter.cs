@@ -6,7 +6,7 @@ using System.Windows;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 
-namespace wpfMovieManager2Mysql
+namespace WpfMovieManager2Mysql
 {
     public class IntCollection : ObservableCollection<int> { }
 

@@ -1,9 +1,11 @@
-﻿using NLog;
+﻿using MySql.Data.MySqlClient;
+using NLog;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
+using System.Diagnostics;
+using WpfMovieManager2Mysql;
 
-namespace wpfMovieManager2Mysql
+namespace WpfMovieManager2Mysql
 {
     class MovieContentsParent
     {
@@ -12,28 +14,26 @@ namespace wpfMovieManager2Mysql
         public double TotalLength = 0;
         public int FileCount = 0;
 
-        public static List<MovieContents> GetDbViewContents(DbConnection myDbCon)
+        public static List<MovieContents> GetDbViewContents(MySqlDbConnection myDbCon)
         {
             List<MovieContents> listMContents = new List<MovieContents>();
 
             if (myDbCon == null)
-                myDbCon = new DbConnection();
+                myDbCon = new MySqlDbConnection();
 
             string queryString
-                        = "SELECT KIND "
-                        + "    , ID, NAME, SIZE "
-                        + "    , FILE_DATE, MOVIE_NEWDATE, SELL_DATE "
-                        + "    , RATING, LABEL, COMMENT, REMARK "
-                        + "    , SITE_NAME "
-                        + "    , PRODUCT_NUMBER "
-                        + "    , FILE_COUNT, MOVIE_COUNT, PHOTO_COUNT "
-                        + "    , EXTENSION, CREATE_DATE, UPDATE_DATE "
-                        + "    , TAG "
-                        + "  FROM V_MOVIE_CONTENTS "
-                        + ""
-                        + "";
+                        = "SELECT c.id "
+                        + "    , store_label, name, product_number, extension "
+                        + "    , tag, publish_date, file_date, file_count "
+                        + "    , size, rating, c.comment, c.remark "
+                        + "    , file_status "
+                        + "    , c.created_at, c.updated_at, s.type, s.path "
+                        + "  FROM contents as c "
+                        + "    LEFT JOIN av.store as s "
+                        + "      ON c.store_label = s.label"
+                        + "    ORDER BY c.created_at DESC";
 
-            SqlDataReader reader = null;
+            MySqlDataReader reader = null;
             try
             {
                 reader = myDbCon.GetExecuteReader(queryString);
@@ -43,39 +43,40 @@ namespace wpfMovieManager2Mysql
 
                     if (reader.IsClosed)
                     {
-                        _logger.Debug("V_MOVIE_CONTENTS reader.IsClosed");
-                        throw new Exception("COMPANY_ARREARS_DETAILの残高の取得でreaderがクローズされています");
+                        _logger.Debug("av.contents reader.IsClosed");
+                        throw new Exception("av.contentsの取得でreaderがクローズされています");
                     }
 
                     while (reader.Read())
                     {
                         MovieContents data = new MovieContents();
 
-                        data.Kind = DbExportCommon.GetDbInt(reader, 0);
-                        data.Id = DbExportCommon.GetDbInt(reader, 1);
-                        data.Name = DbExportCommon.GetDbString(reader, 2);
-                        data.Size = DbExportCommon.GetLong(reader, 3);
-                        data.FileDate = DbExportCommon.GetDbDateTime(reader, 4);
-                        data.MovieNewDate = DbExportCommon.GetDbDateTime(reader, 5);
-                        data.SellDate = DbExportCommon.GetDbDateTime(reader, 6);
-                        data.Rating = DbExportCommon.GetDbInt(reader, 7);
-                        data.Label = DbExportCommon.GetDbString(reader, 8);
-                        data.Comment = DbExportCommon.GetDbString(reader, 9);
-                        data.Remark = DbExportCommon.GetDbString(reader, 10);
-                        data.SiteName = DbExportCommon.GetDbString(reader, 11);
-                        data.ProductNumber = DbExportCommon.GetDbString(reader, 12);
-                        data.FileCount = DbExportCommon.GetDbInt(reader, 13);
-                        data.MovieCount = DbExportCommon.GetDbString(reader, 14);
-                        data.PhotoCount = DbExportCommon.GetDbString(reader, 15);
-                        data.Extension = DbExportCommon.GetDbString(reader, 16);
-                        data.CreateDate = DbExportCommon.GetDbDateTime(reader, 17);
-                        data.UpdateDate = DbExportCommon.GetDbDateTime(reader, 18);
-                        data.Tag = DbExportCommon.GetDbString(reader, 19);
-                        //data.ChildTableName = MovieContents.TABLE_KIND_MOVIE_FILESCONTENTS;
+                        data.Id = MySqlDbExportCommon.GetDbInt(reader, 0);
+                        data.StoreLabel = MySqlDbExportCommon.GetDbString(reader, 1);
+                        data.Name = MySqlDbExportCommon.GetDbString(reader, 2);
+                        data.ProductNumber = MySqlDbExportCommon.GetDbString(reader, 3);
+                        data.Extension = MySqlDbExportCommon.GetDbString(reader, 4);
+                        data.Tag = MySqlDbExportCommon.GetDbString(reader, 5);
+                        data.SellDate = MySqlDbExportCommon.GetDbDateTime(reader, 6);
+                        data.FileDate = MySqlDbExportCommon.GetDbDateTime(reader, 7);
+                        data.FileCount = MySqlDbExportCommon.GetDbInt(reader, 8);
+                        data.Size = MySqlDbExportCommon.GetLong(reader, 9);
+                        data.Rating = MySqlDbExportCommon.GetDbInt(reader, 10);
+                        data.Comment = MySqlDbExportCommon.GetDbString(reader, 11);
+                        data.Remark = MySqlDbExportCommon.GetDbString(reader, 12);
+                        data.FileStatus = MySqlDbExportCommon.GetDbString(reader, 13);
+                        data.CreatedAt = MySqlDbExportCommon.GetDbDateTime(reader, 14);
+                        data.UpdatedAt = MySqlDbExportCommon.GetDbDateTime(reader, 15);
+                        data.Type = MySqlDbExportCommon.GetDbString(reader, 16);
+                        data.Path = MySqlDbExportCommon.GetDbString(reader, 17);
 
                         listMContents.Add(data);
                     }
                 } while (reader.NextResult());
+            }
+            catch(Exception ex)
+            {
+                Debug.Write(ex);
             }
             finally
             {

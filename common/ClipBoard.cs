@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace wpfMovieManager2Mysql.common
+namespace WpfMovieManager2Mysql.common
 {
     class ClipBoard
     {

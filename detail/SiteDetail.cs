@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Data;
 
-namespace wpfMovieManager2Mysql
+namespace WpfMovieManager2Mysql
 {
     public class SiteDetail : detail.BaseDetail
     {

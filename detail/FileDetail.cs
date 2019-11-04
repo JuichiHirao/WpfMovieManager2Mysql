@@ -7,8 +7,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Data;
+using WpfMovieManager2.data;
 
-namespace wpfMovieManager2Mysql.detail
+namespace WpfMovieManager2Mysql.detail
 {
     public class FileDetail : detail.BaseDetail
     {
@@ -17,9 +18,9 @@ namespace wpfMovieManager2Mysql.detail
         public int FileCount = 0;
         public string Extension = "";
 
-        public FileDetail(MovieContents myMovieContents, MovieGroup myGroup)
+        public FileDetail(MovieContents myMovieContents, MovieGroupData myGroup)
         {
-            ExistPath = myMovieContents.GetExistPath(myGroup);
+            ExistPath = myMovieContents.Path;
             ContentsName = myMovieContents.Name;
 
             if (ExistPath != null)

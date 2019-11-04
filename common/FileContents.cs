@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace wpfMovieManager2Mysql.common
+namespace WpfMovieManager2Mysql.common
 {
     public class FileContents
     {

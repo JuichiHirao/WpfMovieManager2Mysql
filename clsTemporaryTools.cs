@@ -5,12 +5,15 @@ using System.Diagnostics;
 using System.Linq;
 using System.IO;
 using System.Text.RegularExpressions;
+using WpfMovieManager2Mysql;
+using MySql.Data.MySqlClient;
+using WpfMovieManager2.data;
 
-namespace wpfMovieManager2Mysql
+namespace WpfMovieManager2Mysql
 {
     class TemporaryTools
     {
-        DbConnection dbcon = new DbConnection();
+        MySqlDbConnection dbcon = new MySqlDbConnection();
 
         public void DbExportGroupFromSiteStore()
         {
@@ -49,19 +52,7 @@ namespace wpfMovieManager2Mysql
              */
         }
 
-        public void DbUpdateDir(List<MovieGroup> myListGroup)
-        {
-            foreach(MovieGroup data in myListGroup)
-            {
-                if (data.Explanation.IndexOf("DIR情報") >= 0)
-                {
-                    data.Explanation = data.Explanation.Replace("DIR情報【", "").Replace("】", "");
-                    data.DbUpdate(dbcon);
-                }
-            }
-        }
-
-        public void ExportMovieGroupFromMovieFilesTagOnly(List<MovieGroup> myListGroup)
+        public void ExportMovieGroupFromMovieFilesTagOnly(List<MovieGroupData> myListGroup)
         {
             List<string> listTag = GetOnlyTagList();
 
@@ -74,36 +65,36 @@ namespace wpfMovieManager2Mysql
                     foreach (string field in csvSplit)
                     {
                         var checkdata = from groupInfo in myListGroup
-                                        where groupInfo.Name == field.Trim()
+                                        where groupInfo.Name1 == field.Trim()
                                         select groupInfo;
 
                         if (checkdata.Count() <= 0)
                         {
                             Debug.Print("TAGのみ " + field);
-                            MovieGroup ginfo = new MovieGroup();
-                            ginfo.Name = field;
-                            ginfo.Explanation = "TAGのみ";
-                            ginfo.Kind = 4;
+                            MovieGroupData ginfo = new MovieGroupData();
+                            ginfo.Label = field;
+                            ginfo.Path = "TAGのみ";
+                            //ginfo.Kind = 4;
 
-                            MovieGroups.DbExport(ginfo, dbcon);
+                            //MovieGroupData.DbExport(ginfo, dbcon);
                         }
                     }
                 }
                 else
                 {
                     var checkdata = from groupInfo in myListGroup
-                                    where groupInfo.Name == data.Trim()
+                                    where groupInfo.Name1 == data.Trim()
                                     select groupInfo;
 
                     if (checkdata.Count() <= 0)
                     {
                         Debug.Print("TAGのみ " + data);
-                        MovieGroup ginfo = new MovieGroup();
-                        ginfo.Name = data;
-                        ginfo.Explanation = "TAGのみ";
-                        ginfo.Kind = 4;
+                        MovieGroupData ginfo = new MovieGroupData();
+                        ginfo.Label = data;
+                        ginfo.Path = "TAGのみ";
+                        //ginfo.Kind = 4;
 
-                        MovieGroups.DbExport(ginfo, dbcon);
+                        //MovieGroups.DbExport(ginfo, dbcon);
                     }
                 }
             }
@@ -122,18 +113,18 @@ namespace wpfMovieManager2Mysql
                                 + "  ) AS TAGLIST "
                                 + "  ORDER BY TAG ";
 
-            SqlCommand command = new SqlCommand(queryString, dbcon.getSqlConnection());
+            MySqlCommand command = new MySqlCommand(queryString, dbcon.getMySqlConnection());
 
             dbcon.openConnection();
 
-            SqlDataReader reader = command.ExecuteReader();
+            MySqlDataReader reader = command.ExecuteReader();
 
             List<string> listTag = new List<string>();
             do
             {
                 while (reader.Read())
                 {
-                    string tagName = DbExportCommon.GetDbString(reader, 0);
+                    string tagName = MySqlDbExportCommon.GetDbString(reader, 0);
 
                     if (tagName.Length > 0)
                         listTag.Add(tagName);
