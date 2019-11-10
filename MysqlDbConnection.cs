@@ -158,7 +158,7 @@ namespace WpfMovieManager2Mysql
         /// </summary>
         public MySqlDataReader GetExecuteReader(string myMySqlCommand)
         {
-            MySqlCommand dbcmd = dbcon.CreateCommand();
+            MySqlCommand dbcmd = new MySqlCommand("set net_write_timeout=60; set net_read_timeout=60", dbcon);
 
             dbcmd.CommandText = myMySqlCommand;
 

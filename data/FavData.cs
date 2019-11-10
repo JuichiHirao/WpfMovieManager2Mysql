@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace WpfMovieManager2.data
 {
-    class FavData : INotifyPropertyChanged
+    public class FavData : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 

@@ -123,6 +123,17 @@ namespace WpfMovieManager2Mysql
 
             return infoData;
         }
+        public StoreGroupInfoData ClearAndExecute(FavData myGroupData)
+        {
+            Clear();
+
+            SetActress(myGroupData.Label);
+
+            StoreGroupInfoData infoData = Execute();
+
+            return infoData;
+        }
+
         public StoreGroupInfoData Execute()
         {
             string[] manyActress = null;

@@ -48,12 +48,28 @@
             </Kind>
         </x:XData>
     </XmlDataProvider>
+    <XmlDataProvider x:Key="formctrlSortFavSetting" >
+        <x:XData>
+            <Kind xmlns="">
+                <KindData DbValue="CreatedAt" DisplayName="Default（登録日）" />
+                <KindData DbValue="Label" DisplayName="Label" />
+            </Kind>
+        </x:XData>
+    </XmlDataProvider>
     <XmlDataProvider x:Key="formctrlAddGroupKind" >
         <x:XData>
             <Kind xmlns="">
                 <KindData DbValue="file" DisplayName="1:DIR" />
                 <KindData DbValue="site" DisplayName="3:SITE" />
                 <KindData DbValue="actress" DisplayName="4:ACTRESS" />
+            </Kind>
+        </x:XData>
+    </XmlDataProvider>
+    <XmlDataProvider x:Key="formctrlAddGroupFavType" >
+        <x:XData>
+            <Kind xmlns="">
+                <KindData DbValue="actress" DisplayName="actreess" />
+                <KindData DbValue="keyword" DisplayName="keyword" />
             </Kind>
         </x:XData>
     </XmlDataProvider>

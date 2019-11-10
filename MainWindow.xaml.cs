@@ -57,6 +57,7 @@ namespace WpfMovieManager2Mysql
         string dispinfoGroupButton = "";
         bool dispinfoIsGroupVisible = false; // グループの表示を有効にする場合はtrue
         bool dispinfoIsGroupAddVisible = false; // グループ追加の表示を有効にする場合はtrue
+        bool dispinfoIsGroupFavAddVisible = false; // グループ追加の表示を有効にする場合はtrue
         bool dispinfoIsContentsVisible = false;
         int dispinfoContentsVisibleKind = 0;
         string dispinfoGroupVisibleType = "file";
@@ -188,12 +189,13 @@ namespace WpfMovieManager2Mysql
                 dgridMovieGroup.Width = lgridMain.ColumnDefinitions[MAIN_COLUMN_NO_GROUP].Width.Value - 10;
                 ColWidth1Group = 500;
 
+                // dispinfoIsGroupFavAddVisible
                 if (dispinfoGroupVisibleType == "actress")
                 {
                     lgridMovieGroup.Visibility = Visibility.Collapsed;
                     lgridGroupFav.Visibility = Visibility.Visible;
 
-                    if (!dispinfoIsGroupAddVisible)
+                    if (!dispinfoIsGroupFavAddVisible)
                         lgridGroupFav.RowDefinitions[1].Height = new GridLength(0);
                     else
                         lgridGroupFav.RowDefinitions[1].Height = new GridLength(370);
@@ -441,7 +443,7 @@ namespace WpfMovieManager2Mysql
             // OnDisplayImage(null, dispinfoTargetGroupBySelectContents);
 
             // 選択されているグループで表示
-            StoreGroupInfoData filesInfo = ColViewMovieContents.ClearAndExecute(dispinfoSelectGroup);
+            StoreGroupInfoData filesInfo = ColViewMovieContents.ClearAndExecute(dispinfoSelectFavData);
 
             this.Title = "未評価 [" + filesInfo.Unrated + "/" + filesInfo.FileCount + "]  Size [" + CommonMethod.GetDisplaySize(filesInfo.Size) + "]";
             txtbGroupInfo.Text = "未評価 [" + filesInfo.Unrated + "/" + filesInfo.FileCount + "]  Size [" + CommonMethod.GetDisplaySize(filesInfo.Size) + "]";
@@ -453,10 +455,30 @@ namespace WpfMovieManager2Mysql
             ColViewStore.Execute();
         }
 
+        private void OnTextSearchFavTextChanged(object sender, TextChangedEventArgs e)
+        {
+            ColViewFav.SetSearchText(txtFavSearch.Text);
+            ColViewFav.Execute();
+        }
+
         private void OnCloseGroupFilter_Click(object sender, RoutedEventArgs e)
         {
             if (dispinfoIsGroupAddVisible)
                 dispinfoIsGroupAddVisible  = false;
+            else
+                dispinfoIsGroupVisible = false;
+
+            LayoutChange();
+        }
+
+        private void OnCloseGroupFavFilter_Click(object sender, RoutedEventArgs e)
+        {
+            if (dispinfoIsGroupFavAddVisible)
+            {
+                dispinfoIsGroupFavAddVisible = false;
+                dispinfoIsGroupVisible = false;
+
+            }
             else
                 dispinfoIsGroupVisible = false;
 
@@ -945,32 +967,35 @@ namespace WpfMovieManager2Mysql
             Button button = sender as Button;
             if (button == null)
             {
-                if (dispinfoSelectGroup == null)
+                if (dispinfoSelectFavData == null)
                     return;
 
-                txtAddGroupLabel.Text = dispinfoSelectGroup.Label;
-                txtAddGroupName1.Text = dispinfoSelectGroup.Name1;
-                txtAddGroupName2.Text = dispinfoSelectGroup.Name2;
-                txtAddGroupPath.Text = dispinfoSelectGroup.Path;
-                cmbAddGroupKind.SelectedValue = dispinfoSelectGroup.Type;
-                txtAddGroupId.Text = Convert.ToString(dispinfoSelectGroup.Id);
-                txtbAddGroupMode.Text = "Edit";
+                txtAddFavLabel.Text = dispinfoSelectFavData.Label;
+                txtAddFavName.Text = dispinfoSelectFavData.Name;
+                txtAddFavComment.Text = dispinfoSelectFavData.Comment;
+                cmbAddFavType.SelectedValue = dispinfoSelectFavData.Type;
+                txtAddFavId.Text = Convert.ToString(dispinfoSelectFavData.Id);
+                txtbAddFavMode.Text = "Edit";
             }
             else
             {
-                txtAddGroupLabel.Text = "";
-                txtAddGroupName1.Text = "";
-                txtAddGroupName2.Text = "";
-                txtAddGroupPath.Text = "";
-                cmbAddGroupKind.SelectedValue = null;
-                txtAddGroupId.Text = "";
-                txtbAddGroupMode.Text = "Register";
+                string type = "";
+                if (dispinfoSelectFavData != null)
+                    type = Convert.ToString(dispinfoSelectFavData.Type);
+
+                txtAddFavLabel.Text = "";
+                txtAddFavName.Text = "";
+                txtAddFavComment.Text = "";
+                cmbAddFavType.SelectedValue = type;
+                txtAddFavId.Text = "";
+                txtbAddFavMode.Text = "Register";
             }
             dispinfoIsGroupAddVisible = true;
+            dispinfoIsGroupFavAddVisible = true;
             LayoutChange();
         }
 
-        private void OnAddGroupRegistOrEdit(object sender, RoutedEventArgs e)
+        private void OnAddGroupRegisterOrEdit(object sender, RoutedEventArgs e)
         {
             // ClickしたのがButtonでは無い場合は編集ボタンを押下されたと判断
             Button button = sender as Button;
@@ -998,6 +1023,7 @@ namespace WpfMovieManager2Mysql
                 txtbAddGroupMode.Text = "Register";
             }
             dispinfoIsGroupAddVisible = true;
+            dispinfoIsGroupFavAddVisible = false;
             LayoutChange();
         }
         private void OnAddGroupDelete(object sender, RoutedEventArgs e)
@@ -1140,6 +1166,46 @@ namespace WpfMovieManager2Mysql
             LayoutChange();
         }
 
+        private void OnButtonFavRegisterClick(object sender, RoutedEventArgs e)
+        {
+            if (cmbAddFavType.SelectedValue == null)
+            {
+                MessageBox.Show("Type[actress,keyword]が指定されていません");
+                return;
+            }
+
+            if (txtbAddFavMode.Text == "Register")
+            {
+                FavData registerData = new FavData();
+                registerData.Label = txtAddFavLabel.Text;
+                registerData.Name = txtAddFavName.Text;
+                registerData.Comment = txtAddFavComment.Text;
+                registerData.Type = Convert.ToString(cmbAddFavType.SelectedValue);
+
+                ColViewFav.Add(registerData);
+                ColViewFav.Refresh();
+            }
+            else
+            {
+                dispinfoSelectFavData.Label = txtAddFavLabel.Text;
+                dispinfoSelectFavData.Name = txtAddFavName.Text;
+                dispinfoSelectFavData.Comment = txtAddFavComment.Text;
+                dispinfoSelectFavData.Type = Convert.ToString(cmbAddFavType.SelectedValue);
+
+                ColViewFav.Update(dispinfoSelectFavData);
+            }
+
+            txtAddFavLabel.Text = "";
+            txtAddFavName.Text = "";
+            txtAddFavComment.Text = "";
+            cmbAddFavType.SelectedValue = null;
+            txtAddFavId.Text = "";
+
+            dispinfoIsGroupAddVisible = false;
+            dispinfoIsGroupFavAddVisible = false;
+            LayoutChange();
+        }
+
         private void txtAddGroupId_TextChanged(object sender, TextChangedEventArgs e)
         {
             TextBox textbox = sender as TextBox;
@@ -1161,6 +1227,31 @@ namespace WpfMovieManager2Mysql
                 catch (Exception)
                 {
                     txtbAddGroupMode.Text = "Register";
+                }
+            }
+        }
+
+        private void OnTextFavIdTextChanged(object sender, TextChangedEventArgs e)
+        {
+            TextBox textbox = sender as TextBox;
+
+            if (dispinfoSelectFavData == null || textbox.Text.Length <= 0)
+            {
+                txtbAddFavMode.Text = "Register";
+            }
+            else
+            {
+                try
+                {
+                    int id = Convert.ToInt32(textbox.Text);
+                    if (dispinfoSelectGroup.Id == id)
+                        txtbAddFavMode.Text = "Edit";
+                    else
+                        txtbAddFavMode.Text = "Register";
+                }
+                catch (Exception)
+                {
+                    txtbAddFavMode.Text = "Register";
                 }
             }
         }

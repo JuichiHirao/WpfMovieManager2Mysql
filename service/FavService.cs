@@ -103,7 +103,7 @@ namespace WpfMovieManager2.service
                 myDbCon = new MySqlDbConnection();
 
             myDbCon.openConnection();
-            string querySting = "INSERT INTO fav(label, name, type, comment, remark) VALUES ( @pLabel, @pName, @pType, @pComment, @pRemark ) ";
+            string querySting = "INSERT INTO av.fav(label, name, type, comment, remark) VALUES ( @pLabel, @pName, @pType, @pComment, @pRemark ) ";
 
             List<MySqlParameter> sqlparamList = new List<MySqlParameter>();
 
@@ -135,7 +135,7 @@ namespace WpfMovieManager2.service
             string queryString
                         = "SELECT "
                         + "    id, label, name, type, comment, remark, created_at, updated_at "
-                        + "  FROM store WHERE ID IN (SELECT MAX(id) FROM store) "
+                        + "  FROM av.fav WHERE ID IN (SELECT MAX(id) FROM fav) "
                         + ""
                         + "";
 
@@ -206,7 +206,7 @@ namespace WpfMovieManager2.service
             param.Value = myFav.Type;
             sqlparamList.Add(param);
 
-            param = new MySqlParameter("@pPath", MySqlDbType.VarChar);
+            param = new MySqlParameter("@pComment", MySqlDbType.VarChar);
             param.Value = myFav.Comment;
             sqlparamList.Add(param);
 
