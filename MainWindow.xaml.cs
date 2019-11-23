@@ -1080,7 +1080,6 @@ namespace WpfMovieManager2Mysql
                         if (!isExist)
                         {
                             MovieContents contents = new MovieContents();
-                            contents.SiteName = dispinfoSelectGroup.Label;
                             contents.Name = dirinfo.Name;
                             contents.Kind = MovieContents.KIND_SITECHK_UNREGISTERED;
                             contents.Label = new DirectoryInfo(dispinfoSelectGroup.Path).Name; // Filterにかからなくなるので格納
@@ -1299,11 +1298,11 @@ namespace WpfMovieManager2Mysql
 
         private void menuitemAddSelectedDataAdd_Click(object sender, RoutedEventArgs e)
         {
-            var SelectIedContents = dgridMovieContents.SelectedItems;
+            var SelectedContents = dgridMovieContents.SelectedItems;
 
             List<MovieContents> MovieContentsList = new List<MovieContents>();
 
-            foreach(MovieContents data in SelectIedContents)
+            foreach(MovieContents data in SelectedContents)
             {
                 if (data.Kind == MovieContents.KIND_SITECHK_UNREGISTERED)
                 {

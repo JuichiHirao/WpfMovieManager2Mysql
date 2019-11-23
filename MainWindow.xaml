@@ -425,7 +425,7 @@
                                         </Grid.ColumnDefinitions>
                                         <TextBlock Name="MovieContentsName" Text="{Binding Path=Name}" TextWrapping="Wrap" TextAlignment="Left" FontSize="16" Grid.ColumnSpan="3" />
                                         <TextBlock Text="{Binding Path=Comment}" TextWrapping="Wrap" TextAlignment="Center" FontSize="12" Margin="5,5,5,5" Grid.Column="1" Grid.Row="1" />
-                                        <TextBlock Text="{Binding Path=DispLabelOrSiteName}" VerticalAlignment="Bottom" TextWrapping="Wrap" Margin="5,0,0,0" TextAlignment="Left" FontSize="14" Grid.Row="2" />
+                                        <TextBlock Text="{Binding Path=StoreLabel}" VerticalAlignment="Bottom" TextWrapping="Wrap" Margin="5,0,0,0" TextAlignment="Left" FontSize="14" Grid.Row="2" />
                                         <TextBlock Text="{Binding Path=Tag}" Margin="10,0,20,0" HorizontalAlignment="Right" VerticalAlignment="Bottom" FontSize="14" Grid.ColumnSpan="2" Grid.Row="2" />
                                         <TextBlock Text="{Binding Path=FileDate, StringFormat='yyyy/MM/dd HH:mm:dd'}" FontSize="10" Grid.Column="2" Grid.Row="2" />
                                     </Grid>

@@ -42,7 +42,6 @@ namespace WpfMovieManager2Mysql
         {
             Id = -1;
             Name = "";
-            SiteName = "";
             Label = "";
             Size = 0;
             //FileDate = FileDate;
@@ -205,39 +204,7 @@ namespace WpfMovieManager2Mysql
             }
         }
 
-        public string DispLabelOrSiteName { get; set; }
-
-        private string _SiteName;
-        public string SiteName
-        {
-            get
-            {
-                return _SiteName;
-            }
-            set
-            {
-                _SiteName = value;
-                if (_SiteName != null && _SiteName.Length > 0)
-                    DispLabelOrSiteName = _SiteName;
-            }
-        }
-
-        private string _Label;
-        public string Label
-        {
-            get
-            {
-                return _Label;
-            }
-            set
-            {
-                _Label = value;
-                if (_Label != null && _Label.Length > 0)
-                {
-                    DispLabelOrSiteName = _Label.ToUpper().Replace("\\\\TWELVE-SRV\\","");
-                }
-            }
-        }
+        public string Label { get; set; }
 
         private string _Comment;
         public string Comment
@@ -591,7 +558,7 @@ namespace WpfMovieManager2Mysql
             MySqlParameter[] sqlparams = new MySqlParameter[7];
             // Create and append the parameters for the Update command.
             sqlparams[0] = new MySqlParameter("@pSiteName", MySqlDbType.VarChar);
-            sqlparams[0].Value = SiteName;
+            sqlparams[0].Value = "";
 
             sqlparams[1] = new MySqlParameter("@pName", MySqlDbType.VarChar);
             sqlparams[1].Value = Name;

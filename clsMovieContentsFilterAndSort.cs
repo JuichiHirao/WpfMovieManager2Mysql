@@ -20,7 +20,6 @@ namespace WpfMovieManager2Mysql
         string FilterLabel = "";
         string FilterActress = "";
         string FilterSiteName = "";
-        string FilterParentPath = "";
 
         public bool IsFilterAv = false;
         public bool IsFilterIv = false;
@@ -34,24 +33,6 @@ namespace WpfMovieManager2Mysql
             listMovieContens.Add(myContents);
         }
 
-        public MovieContents GetTestNumberSite(string mySiteName, int myNum)
-        {
-            int idx = 0;
-            foreach(MovieContents data in listMovieContens)
-            {
-                if (data.Kind != MovieContents.KIND_SITE)
-                    continue;
-
-                if (mySiteName.Equals(data.SiteName))
-                {
-                    if (idx == myNum)
-                        return data;
-
-                    idx++;
-                }
-            }
-            return null;
-        }
         public MovieContentsFilterAndSort(MySqlDbConnection myDbCon)
         {
             dbcon = myDbCon;
@@ -79,7 +60,6 @@ namespace WpfMovieManager2Mysql
             FilterLabel = "";
             FilterActress = "";
             FilterSiteName = "";
-            FilterParentPath = "";
 
             //ColViewListMovieContents.Filter = null;
             //ColViewListMovieContents.SortDescriptions.Clear();
@@ -110,7 +90,6 @@ namespace WpfMovieManager2Mysql
         public void SetSiteContents(string mySiteName, string myParentPath)
         {
             FilterSiteName = mySiteName;
-            FilterParentPath = myParentPath;
         }
         // dgridMovieGroup_SelectionChangedから呼び出し
         public StoreGroupInfoData ClearAndExecute(MovieGroupData myGroupData)
@@ -152,8 +131,6 @@ namespace WpfMovieManager2Mysql
             if (FilterLabel.Length > 0)
                 TargetMatchCount++;
             if (FilterActress.Length > 0)
-                TargetMatchCount++;
-            if (FilterParentPath.Length > 0)
                 TargetMatchCount++;
             if (FilterSiteName.Length > 0)
                 TargetMatchCount++;
@@ -219,14 +196,8 @@ namespace WpfMovieManager2Mysql
 
                 if (FilterSiteName.Length > 0)
                 {
-                    if (FilterSiteName == data.SiteName)
+                    if (data.StoreLabel.IndexOf(FilterSiteName) >= 0)
                         matchCount++;
-                }
-                if (FilterParentPath.Length > 0)
-                {
-                    //if (data.Label.Length > 0 && FilterParentPath.IndexOf(data.Label) >= 0)
-                    if (data.Label.Length > 0 && FilterParentPath.Equals(data.Label))
-                            matchCount++;
                 }
 
                 if (TargetMatchCount <= matchCount)
