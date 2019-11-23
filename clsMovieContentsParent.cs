@@ -22,17 +22,14 @@ namespace WpfMovieManager2Mysql
                 myDbCon = new MySqlDbConnection();
 
             string queryString
-                        = "SELECT c.id "
+                        = "SELECT id "
                         + "    , store_label, name, product_number, extension "
                         + "    , tag, publish_date, file_date, file_count "
-                        + "    , size, rating, c.comment, c.remark "
+                        + "    , size, rating, comment, remark "
                         + "    , file_status "
-                        + "    , c.created_at, c.updated_at, s.type, s.path "
-                        + "  FROM contents as c "
-                        + "    LEFT JOIN av.store as s "
-                        + "      ON c.store_label = s.label"
-                        + "    ORDER BY c.created_at DESC ";
-                        // + "    ORDER BY c.created_at DESC LIMIT 10000 ";
+                        + "    , created_at, updated_at, type, path "
+                        + "  FROM v_contents "
+                        + "    ORDER BY updated_at DESC ";
 
             MySqlDataReader reader = null;
             try

@@ -44,7 +44,7 @@ namespace WpfMovieManager2Mysql
                 throw new Exception("credential.jsonに存在しない[" + target + "]が指定されました or " + ex.Message);
             }
 
-            String connectionInfo = "Database=" + database + "; Data Source=" + datasource + ";User Id=" + user + "; Password=" + password;
+            String connectionInfo = "Database=" + database + "; Data Source=" + datasource + ";User Id=" + user + "; Password=" + password + "; ConnectionTimeout=600; DefaultCommandTimeout=600";
             dbcon = new MySqlConnection(connectionInfo);
         }
         ~MySqlDbConnection()
