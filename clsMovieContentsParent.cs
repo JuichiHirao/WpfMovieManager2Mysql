@@ -29,7 +29,7 @@ namespace WpfMovieManager2Mysql
                         + "    , file_status "
                         + "    , created_at, updated_at, type, path "
                         + "  FROM v_contents "
-                        + "    ORDER BY updated_at DESC LIMIT 20000 ";
+                        + "    ORDER BY updated_at DESC ";
 
             MySqlDataReader reader = null;
             try
