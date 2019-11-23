@@ -46,7 +46,7 @@ namespace WpfMovieManager2Mysql
                 {
                     datatype = myReader.GetDataTypeName(myColumnNo);
 
-                    if (datatype.ToLower().Equals("datetime") || datatype.ToLower().Equals("date"))
+                    if (datatype.ToLower().Equals("datetime") || datatype.ToLower().Equals("date") || datatype.ToLower().Equals("timestamp"))
                     {
                         myData = myReader.GetDateTime(myColumnNo);
                     }

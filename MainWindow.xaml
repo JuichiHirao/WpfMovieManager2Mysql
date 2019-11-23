@@ -459,6 +459,21 @@
                     <RowDefinition />
                 </Grid.RowDefinitions>
                 <Grid>
+                    <Grid.Resources>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Margin" Value="5,5,5,5" />
+                            <Setter Property="FontSize" Value="18" />
+                            <Setter Property="HorizontalAlignment" Value="Center" />
+                            <Setter Property="VerticalAlignment" Value="Bottom" />
+                        </Style>
+                        <Style TargetType="TextBox">
+                            <Setter Property="Margin" Value="5,5,5,5" />
+                            <Setter Property="FontSize" Value="24" />
+                            <Setter Property="VerticalAlignment" Value="Bottom" />
+                            <Setter Property="BorderThickness" Value="0" />
+                            <!--<EventSetter Event="TextChanged" Handler="txtSiteDetailContentsName_TextChanged" />-->
+                        </Style>
+                    </Grid.Resources>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition />
                         <ColumnDefinition />
@@ -469,11 +484,19 @@
                         <RowDefinition />
                         <RowDefinition />
                     </Grid.RowDefinitions>
-                    <TextBox Name="txtSiteDetailContentsName" Margin="5,5,55,5" BorderThickness="0" FontSize="36" Grid.ColumnSpan="2" TextChanged="txtSiteDetailContentsName_TextChanged"  />
-                    <TextBox Name="txtSiteDetailContentsTag" Margin="10,5,5,5" BorderThickness="0" VerticalAlignment="Bottom" FontSize="24" Grid.ColumnSpan="2" Grid.Row="1" />
-                    <TextBox Name="txtSiteDetailContentsPath" Margin="30,5,5,5" BorderThickness="0" FontSize="16" Grid.ColumnSpan="2" Grid.Row="2" />
-                    <TextBox Name="txtSiteDetailContentsComment" Margin="30,5,5,5" BorderThickness="0" FontSize="16" Grid.ColumnSpan="2" Grid.Row="3" />
-                    <Button Name="btnSiteDetailUpdate" Style="{StaticResource CircleButton}" Width="45" Height="45" Margin="0,0,5,5" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Column="1" Click="btnSiteDetailUpdate_Click">更新</Button>
+                    <!-- OnSiteDetail_TextChanged -->
+                    <TextBox Name="txtSiteDetailContentsName" Margin="5,5,180,5" FontSize="36" Grid.ColumnSpan="2" TextChanged="OnSiteDetail_TextChanged" />
+                    <TextBlock Name="txtbSiteDetailContentsId" Width="100" Margin="5,5,50,5" HorizontalAlignment="Right" Grid.Column="1" />
+                    <Button Name="btnSiteDetailUpdate" Style="{StaticResource CircleButton}" Width="43" Height="43" Margin="0,2,30,5" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Column="1" Click="btnSiteDetailUpdate_Click">更新</Button>
+                    <TextBox Name="txtSiteDetailContentsTag" Margin="5,5,5,5" Grid.Row="1" TextChanged="OnSiteDetail_TextChanged" />
+                    <TextBox Name="txtSiteDetailContentsFileDate" Margin="5,5,5,5" Grid.Column="1" Grid.Row="1" TextChanged="OnSiteDetail_TextChanged" />
+                    <TextBox Name="txtSiteDetailContentsStoreLabel" Margin="30,5,5,5" Grid.ColumnSpan="2" Grid.Row="2" TextChanged="OnSiteDetail_TextChanged" />
+                    <WrapPanel Orientation="Horizontal" Grid.ColumnSpan="2" Grid.Row="3">
+                        <TextBlock Text="created at" Margin="3,3,3,3" VerticalAlignment="Bottom" />
+                        <TextBlock Name="txtbSiteDetailContentsCreatedAt" Width="250" Margin="10,5,5,5" HorizontalAlignment="Right" Grid.Column="1" />
+                        <TextBlock Text="updated at" Margin="3,3,3,3" VerticalAlignment="Bottom" />
+                        <TextBlock Name="txtbSiteDetailContentsUpdatedAt" Width="250" Margin="10,5,5,5" HorizontalAlignment="Right" Grid.Column="1" />
+                    </WrapPanel>
                 </Grid>
                 <WrapPanel Orientation="Horizontal" Grid.Row="1">
                     <WrapPanel.Resources>
@@ -607,8 +630,8 @@
                             <Setter Property="Grid.Column" Value="1" />
                         </Style>
                     </Grid.Resources>
-                    <Button Name="btnFileDetailUpdate" Style="{StaticResource CircleButton}" Width="45" Height="45" HorizontalAlignment="Left" VerticalAlignment="Top" Click="btnSiteDetailUpdate_Click">更新</Button>
-                    <TextBlock Text="Tag" Margin="5,5,5,5" Grid.Row="1"  />
+                    <Button Content="更新" Name="btnFileDetailUpdate" Style="{StaticResource CircleButton}" Width="45" Height="45" Grid.Row="1" Click="btnSiteDetailUpdate_Click" />
+                    <!-- <TextBlock Text="Tag" Margin="5,5,5,5" Grid.Row="1"  /> -->
                     <TextBox Name="txtFileDetailContentsTag" Grid.Row="1" TextChanged="OnFileDetail_TextChanged" />
                     <TextBlock Text="StoreLabel" Margin="5,5,5,5" Grid.Row="2" />
                     <TextBox Name="txtFileDetailContentsLabel" Grid.Row="2" TextChanged="OnFileDetail_TextChanged" />
@@ -628,6 +651,7 @@
                             <ColumnDefinition />
                             <ColumnDefinition Width="120" />
                             <ColumnDefinition />
+                            <ColumnDefinition Width="80" />
                         </Grid.ColumnDefinitions>
                         <Grid.Resources>
                             <Style TargetType="TextBlock">
@@ -646,8 +670,9 @@
                         </Grid.Resources>
                         <TextBlock Text="CreatedAt" />
                         <TextBox Name="txtFileDetailContentsCreateDate" IsReadOnly="True" Grid.Column="1" />
-                        <TextBlock Text="UpdateDate" Grid.Column="2" />
+                        <TextBlock Text="UpdatedAt" Grid.Column="2" />
                         <TextBox Name="txtFileDetailContentsUpdateDate" IsReadOnly="True" Grid.Column="3" />
+                        <TextBlock Name="txtbFileDetailId" Text="" Grid.Column="4" />
                     </Grid>
                 </Grid>
                 <Grid Grid.Row="2">

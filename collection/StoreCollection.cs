@@ -33,6 +33,21 @@ namespace WpfMovieManager2.collection
             ColViewListData = CollectionViewSource.GetDefaultView(listData);
         }
 
+        public MovieGroupData GetMatchLabel(string myLabel)
+        {
+            var result = from store in listData where store.Label == myLabel
+                        orderby store
+                        select store;
+
+            if (result.Count() == 1)
+            {
+                foreach (MovieGroupData data in result)
+                    return data;
+            }
+
+            return null;
+        }
+
         public void SetSort(string mySortItem, ListSortDirection sortOrder)
         {
             if (ColViewListData != null && ColViewListData.CanSort == true)

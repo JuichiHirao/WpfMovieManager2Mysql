@@ -60,7 +60,8 @@ namespace WpfMovieManager2Mysql
             // StoreLabelにスペース文字列が存在する場合、SiteContentsかもなので、listファイルをチェック
             if (Type == "site")
             {
-                string listFilename = System.IO.Path.Combine(Path, "list");
+                string pathname = System.IO.Path.Combine(Path, Name);
+                string listFilename = System.IO.Path.Combine(pathname, "list");
 
                 if (File.Exists(listFilename))
                 {
@@ -362,6 +363,8 @@ namespace WpfMovieManager2Mysql
                 Label = myData.Label;
             if (myData.SellDate.Year != 1900)
                 SellDate = myData.SellDate;
+            if (myData.FileDate.Year != 1900)
+                FileDate = myData.FileDate;
             if (myData.ProductNumber != null && myData.ProductNumber.Length > 0 && ProductNumber != myData.ProductNumber.Trim())
                 ProductNumber = myData.ProductNumber;
             if (myData.Extension != null && myData.Extension.Length > 0 && Extension != myData.Extension.ToUpper().Trim())
@@ -386,6 +389,7 @@ namespace WpfMovieManager2Mysql
         {
             string sqlCommand = "UPDATE contents ";
             sqlCommand += "SET name = @pName ";
+            sqlCommand += "  , store_label = @pStoreLabel ";
             sqlCommand += "  , tag = @pTag ";
             sqlCommand += "  , extension = @pExtension ";
             sqlCommand += "  , product_number = @pProductNumber ";
@@ -399,38 +403,38 @@ namespace WpfMovieManager2Mysql
 
             List<MySqlParameter> listSqlParam = new List<MySqlParameter>();
 
-            MySqlParameter sqlparam = new MySqlParameter("@pName", SqlDbType.VarChar);
+            MySqlParameter sqlparam = new MySqlParameter("@pName", MySqlDbType.VarChar);
             sqlparam.Value = Name;
             listSqlParam.Add(sqlparam);
 
-            sqlparam = new MySqlParameter("@pLabel", SqlDbType.VarChar);
-            sqlparam.Value = Label;
+            sqlparam = new MySqlParameter("@pStoreLabel", MySqlDbType.VarChar);
+            sqlparam.Value = StoreLabel;
             listSqlParam.Add(sqlparam);
 
-            sqlparam = new MySqlParameter("@pTag", SqlDbType.VarChar);
+            sqlparam = new MySqlParameter("@pTag", MySqlDbType.VarChar);
             if (Tag == null || Tag.Length <= 0)
                 sqlparam.Value = DBNull.Value;
             else
                 sqlparam.Value = Tag;
             listSqlParam.Add(sqlparam);
 
-            sqlparam = new MySqlParameter("@pExtension", SqlDbType.VarChar);
+            sqlparam = new MySqlParameter("@pExtension", MySqlDbType.VarChar);
             sqlparam.Value = Extension;
             listSqlParam.Add(sqlparam);
 
-            sqlparam = new MySqlParameter("@pProductNumber", SqlDbType.VarChar);
+            sqlparam = new MySqlParameter("@pProductNumber", MySqlDbType.VarChar);
             sqlparam.Value = ProductNumber;
             listSqlParam.Add(sqlparam);
 
-            sqlparam = new MySqlParameter("@pSellDate", SqlDbType.Date);
+            sqlparam = new MySqlParameter("@pSellDate", MySqlDbType.Date);
             sqlparam.Value = SellDate;
             listSqlParam.Add(sqlparam);
 
-            sqlparam = new MySqlParameter("@pFileDate", SqlDbType.Date);
+            sqlparam = new MySqlParameter("@pFileDate", MySqlDbType.Date);
             sqlparam.Value = FileDate;
             listSqlParam.Add(sqlparam);
 
-            sqlparam = new MySqlParameter("@pId", SqlDbType.Int);
+            sqlparam = new MySqlParameter("@pId", MySqlDbType.Int32);
             sqlparam.Value = Id;
             listSqlParam.Add(sqlparam);
 

@@ -52,7 +52,8 @@ namespace WpfMovieManager2Mysql.common
                 if (String.IsNullOrEmpty(myMovieContents.ExistList))
                     return;
 
-                SiteDetail ColViewSiteDetail = new SiteDetail(myMovieContents.Path);
+                string pathname = Path.Combine(myMovieContents.Path, myMovieContents.Name);
+                SiteDetail ColViewSiteDetail = new SiteDetail(pathname);
 
                 if (!String.IsNullOrEmpty(myMovieContents.ExistList))
                 {
@@ -61,7 +62,7 @@ namespace WpfMovieManager2Mysql.common
                     string line = sreader.ReadLine();
                     while (line != null)
                     {
-                        string movieFilename = Path.Combine(myMovieContents.Path, line);
+                        string movieFilename = Path.Combine(pathname, line);
                         FileInfo fileinfo = new FileInfo(movieFilename);
                         if (fileinfo.Exists)
                             files.Add(fileinfo);
