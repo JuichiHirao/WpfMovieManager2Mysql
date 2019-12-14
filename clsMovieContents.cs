@@ -22,8 +22,9 @@ namespace WpfMovieManager2Mysql
         public const int KIND_SITECHK_UNREGISTERED = 11;
         public const int KIND_SITECHK_NOTEXIST = 12;
 
-        public static string REGEX_MOVIE_EXTENTION = @".*\.avi$|.*\.wmv$|.*\.mpg$|.*ts$|.*divx$|.*mp4$|.*asf$|.*mkv$|.*rm$|.*rmvb$|.*m4v$|.*3gp$";
-        //  @".*\.avi$|.*\.wmv$|.*\.mpg$|.*ts$|.*divx$|.*mp4$|.*asf$|.*jpg$|.*jpeg$|.*iso$|.*mkv$";
+        public static string REGEX_MOVIE_EXTENTION = @".*\.avi$|.*\.wmv$|.*\.mpg$|.*ts$|.*divx$|.*mp4$|.*asf$|.*mkv$|.*rm$|.*rmvb$|.*m4v$|.*3gp$|.*mov$";
+        public static string REGEX_IMAGE_EXTENTION = @".*\.jpg$|.*\.png$|.*\.gif$";
+        //  @".*\.avi$|.*\.wmv$|.*\.mpg$|.*ts$|.*divx$|.*mp4$|.*asf$|.*jpg$|.*jpesg$|.*iso$|.*mkv$";
 
         public static string TABLE_KIND_MOVIE_CONTENTS = "MOVIE_CONTENTS_RENEW";
         public static string TABLE_KIND_MOVIE_FILESCONTENTS = "MOVIE_FILES";
@@ -48,6 +49,68 @@ namespace WpfMovieManager2Mysql
             Extension = "";
             Rating = 0;
             Comment = "";
+        }
+
+        public void ParseMedia()
+        {
+            string[] files = Directory.GetFiles(Path, @Name + "*");
+
+            string pathname = System.IO.Path.Combine(Path, Name);
+
+            // ListFile, PackageImage, ImageList, MovieList
+            ImageList = new List<FileInfo>();
+            MovieList = new List<FileInfo>();
+            PackageImage = null;
+            ThumbnailImage = null;
+
+            Regex reImage = new Regex(REGEX_IMAGE_EXTENTION);
+            Regex reMovie = new Regex(REGEX_MOVIE_EXTENTION);
+
+            foreach(string file in files)
+            {
+                if (reImage.IsMatch(file))
+                {
+                    FileInfo fileinfo = new FileInfo(file);
+                    if (fileinfo.Name.Replace(fileinfo.Extension, "") == Name)
+                        PackageImage = fileinfo;
+                    else if (fileinfo.Name.Replace(fileinfo.Extension, "") == Name + "_th")
+                        ThumbnailImage = fileinfo;
+                    else
+                        ImageList.Add(new FileInfo(file));
+                }
+
+                if (reMovie.IsMatch(file))
+                    MovieList.Add(new FileInfo(file));
+            }
+            if (Directory.Exists(pathname))
+            {
+                string listFilename = System.IO.Path.Combine(pathname, "list");
+
+                if (File.Exists(listFilename))
+                {
+                    ListFile = new FileInfo(listFilename);
+                }
+                else
+                {
+                    files = Directory.GetFiles(pathname, "*");
+
+                    foreach (string file in files)
+                    {
+                        if (reImage.IsMatch(file))
+                        {
+                            if (PackageImage == null)
+                                PackageImage = new FileInfo(file);
+                            else
+                                ImageList.Add(new FileInfo(file));
+                        }
+
+                        if (reMovie.IsMatch(file))
+                            MovieList.Add(new FileInfo(file));
+                    }
+                }
+            }
+
+            return;
         }
 
         public void SetMovieInfo()
@@ -96,6 +159,16 @@ namespace WpfMovieManager2Mysql
 
         public string ExistList { get; set; }
         public string[] ExistMovie { get; set; }
+
+        public FileInfo ListFile { get; set; }
+
+        public FileInfo PackageImage { get; set; }
+
+        public FileInfo ThumbnailImage { get; set; }
+
+        public List<FileInfo> ImageList { get; set; }
+
+        public List<FileInfo> MovieList { get; set; }
 
         public string Type { get; set; }
 

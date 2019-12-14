@@ -248,7 +248,7 @@ namespace WpfMovieManager2Mysql.common
         {
             if (!System.IO.File.Exists(myImagePathname))
                 return null;
-
+            // "J:\\DVDRIP-17\\KOREAN_PORN13\\ka19112401 KOREAN AMATEUR 2019112401\\여친.3gp" でエラー
             BitmapImage bitmap = new BitmapImage();
             var stream = System.IO.File.OpenRead(myImagePathname);
             bitmap.BeginInit();
