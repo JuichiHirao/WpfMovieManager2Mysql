@@ -771,10 +771,15 @@
                     <RowDefinition />
                 </Grid.RowDefinitions>
                 <TextBlock Name="txtbImageInfo" HorizontalAlignment="Center" VerticalAlignment="Top" FontSize="18" Grid.ColumnSpan="2" />
+                <!-- <MediaElement x:Name="myGif" MediaEnded="myGif_MediaEnded" UnloadedBehavior="Manual" Source="file://C:\waiting.GIF" LoadedBehavior="Play" Stretch="None"/>-->
+                <MediaElement Name="mediaSitesImageGifOne" UnloadedBehavior="Manual" LoadedBehavior="Play" Stretch="None" MediaEnded="mediaSitesImageGifOne_MediaEnded"/>
                 <Image Name="imageSitesImageOne" Stretch="Uniform" />
-                <Image Name="imageSitesImageTwo" Stretch="Uniform" Grid.Column="1" />
-                <Image Name="imageSitesImageThree" Stretch="Uniform" Grid.Row="1" />
-                <Image Name="imageSitesImageFour" Stretch="Uniform" Grid.Column="1" Grid.Row="1" />
+                <MediaElement Name="mediaSitesImageGifTwo" UnloadedBehavior="Manual" LoadedBehavior="Play" Stretch="None" Grid.Row="1" MediaEnded="mediaSitesImageGifOne_MediaEnded" />
+                <Image Name="imageSitesImageTwo" Stretch="Uniform" Grid.Row="1" />
+                <MediaElement Name="mediaSitesImageGifThree" UnloadedBehavior="Manual" LoadedBehavior="Play" Stretch="None" Grid.Row="2" MediaEnded="mediaSitesImageGifOne_MediaEnded" />
+                <Image Name="imageSitesImageThree" Stretch="Uniform" Grid.Row="2" />
+                <MediaElement Name="mediaSitesImageGifFour" UnloadedBehavior="Manual" LoadedBehavior="Play" Stretch="None" Grid.Row="3" MediaEnded="mediaSitesImageGifOne_MediaEnded" />
+                <Image Name="imageSitesImageFour" Stretch="Uniform" Grid.Row="3" />
                 <Border Name="ScreenDisableBorderImageContents" Height="0" Width="0" Margin="0,0,0,0" Grid.ColumnSpan="2" Grid.RowSpan="2">
                     <Border.Background>
                         <RadialGradientBrush Opacity="0.5">

@@ -43,8 +43,6 @@ namespace WpfMovieManager2Mysql
 
         MySqlDbConnection dbcon;
 
-        common.Image image = null;
-
         StoreCollection ColViewStore;
         FavCollection ColViewFav;
 
@@ -62,6 +60,8 @@ namespace WpfMovieManager2Mysql
         int dispinfoContentsVisibleKind = 0;
         string dispinfoGroupVisibleType = "file";
         contents.TargetList targetList = null;
+
+        bool dispctrlIsDisplayImageUseColumn = false;
 
 
         double dispctrlContentsWidth = 800;
@@ -496,6 +496,36 @@ namespace WpfMovieManager2Mysql
             ColViewMovieContents.Execute();
         }
 
+        private void DisplayMedia(FileInfo myFileInfo, System.Windows.Controls.Image myImage, MediaElement myMedia, int myRowSpanProperty, int myColumnSpanProperty)
+        {
+            if (myFileInfo.Extension == ".gif")
+            {
+                BitmapImage bitmapImage = (BitmapImage)imageSitesImageOne.Source;
+                myImage.Visibility = Visibility.Collapsed;
+                myMedia.Visibility = Visibility.Visible;
+                myMedia.SetValue(Grid.RowSpanProperty, myRowSpanProperty);
+                myMedia.SetValue(Grid.ColumnSpanProperty, myColumnSpanProperty);
+
+                //mediaSitesImageGifOne.Width = lgridMain.ColumnDefinitions[MAIN_COLUMN_NO_CONTENTS].ActualWidth;
+                //mediaSitesImageGifOne.Height = (imageSitesImageOne.Width / bitmapImage.Width) * bitmapImage.Height;
+                // Source="file://C:\waiting.GIF"
+                myMedia.Source = new Uri("file://" + myFileInfo.FullName);
+            }
+            else
+            {
+                BitmapImage bitmapImage = (BitmapImage)imageSitesImageOne.Source;
+                myMedia.Visibility = Visibility.Collapsed;
+                myImage.Visibility = Visibility.Visible;
+                myImage.SetValue(Grid.RowSpanProperty, myRowSpanProperty);
+                myImage.SetValue(Grid.ColumnSpanProperty, myColumnSpanProperty);
+
+                //imageSitesImageOne.Width = lgridMain.ColumnDefinitions[MAIN_COLUMN_NO_CONTENTS].ActualWidth;
+                //imageSitesImageOne.Height = (imageSitesImageOne.Width / bitmapImage.Width) * bitmapImage.Height;
+
+                myImage.Source = ImageMethod.GetImageStream(myFileInfo.FullName);
+            }
+        }
+
         private void OnDisplayImage(MovieContents myMovieContents, MovieGroupData myTargetGroup)
         {
             // パラメータがnullの場合は画像表示を全てクリア
@@ -505,173 +535,178 @@ namespace WpfMovieManager2Mysql
                 return;
             }
 
-            if (image == null) image = new common.Image(myMovieContents, myTargetGroup);
+            if (myMovieContents.PackageImage == null && myMovieContents.ThumbnailImage == null && myMovieContents.ImageList.Count <= 0)
+                return;
 
-            // PackageImage
-            // Visibleの場合のみ表示
-            FileInfo fileInfoPackage = image.PackageFileInfo;
+            lgridImageContents.RowDefinitions[0].Height = GridLength.Auto;
+            lgridImageContents.RowDefinitions[1].Height = GridLength.Auto;
+            lgridImageContents.RowDefinitions[2].Height = GridLength.Auto;
+            lgridImageContents.RowDefinitions[3].Height = GridLength.Auto;
+            imageSitesImageOne.Source = null;
+            mediaSitesImageGifOne.Source = null;
+            imageSitesImageTwo.Source = null;
+            mediaSitesImageGifTwo.Source = null;
+            imageSitesImageThree.Source = null;
+            mediaSitesImageGifThree.Source = null;
+            imageSitesImageFour.Source = null;
+            mediaSitesImageGifFour.Source = null;
 
-            if (fileInfoPackage != null && fileInfoPackage.Exists)
+            if (myMovieContents.PackageImage != null && myMovieContents.ThumbnailImage != null)
             {
-                txtStatusBar.Text = myMovieContents.ExistMovie[0];
+                if (myMovieContents.MovieList.Count > 0)
+                    txtStatusBar.Text = myMovieContents.MovieList[0].FullName;
                 txtStatusBarFileLength.Text = CommonMethod.GetDisplaySize(myMovieContents.Size);
-                imagePackage.Source = ImageMethod.GetImageStream(fileInfoPackage.FullName);
+                imagePackage.Source = ImageMethod.GetImageStream(myMovieContents.PackageImage.FullName);
+
+                imageSitesImageOne.Source = ImageMethod.GetImageStream(dispinfoSelectContents.ThumbnailImage.FullName);
+                imageSitesImageOne.ToolTip = dispinfoSelectContents.ThumbnailImage.Name;
+                imageSitesImageTwo.Visibility = Visibility.Collapsed;
+                imageSitesImageThree.Visibility = Visibility.Collapsed;
+                imageSitesImageFour.Visibility = Visibility.Collapsed;
+
+                imageSitesImageOne.SetValue(Grid.RowSpanProperty, 4);
+                imageSitesImageOne.SetValue(Grid.ColumnSpanProperty, 2);
+
+                BitmapImage bitmapImage = (BitmapImage)imageSitesImageOne.Source;
+                imageSitesImageOne.Width = lgridMain.ColumnDefinitions[MAIN_COLUMN_NO_CONTENTS].ActualWidth;
+                imageSitesImageOne.Height = (imageSitesImageOne.Width / bitmapImage.Width) * bitmapImage.Height;
+                imageSitesImageOne.Stretch = Stretch.Uniform;
+
+                return;
             }
-            else
+
+            imagePackage.Source = null;
+
+
+            bool existPackage = false;
+            if (dispinfoSelectContents.PackageImage != null)
+                existPackage = true;
+
+            int currentLength = 0;
+            if (dispinfoSelectContents.CurrentImages != null)
+                currentLength = dispinfoSelectContents.CurrentImages.Length;
+
+
+            //Debug.Print("Window.ActualHeight [" + this.ActualHeight + "] AWidth [" + this.ActualWidth + "]");
+            Debug.Print("Package [" + existPackage + "]  ImageList.Count [" + myMovieContents.ImageList.Count + "]個 Current [" + currentLength + "]個");
+            Debug.Print("lgridImageContents AHeight [" + lgridImageContents.ActualHeight + "] AWidth [" + lgridImageContents.ActualWidth + "]");
+            double visibleHeight = lgridImageContents.DesiredSize.Height - lgridImageContents.Margin.Top - lgridImageContents.Margin.Bottom;
+            double visibleWidth = lgridImageContents.DesiredSize.Width - lgridImageContents.Margin.Left - lgridImageContents.Margin.Right;
+            Debug.Print("lgridImageContents Height有効 [" + visibleHeight + "]  DesiredSize Height [" + lgridImageContents.DesiredSize.Height + "] ");
+            Debug.Print("lgridImageContents Width有効 [" + visibleWidth + "]  DesiredSize Width [" + lgridImageContents.DesiredSize.Width + "] ");
+            Debug.Print("imageSitesImageOne.ActualWidth [" + imageSitesImageOne.ActualWidth + "]");
+            Debug.Print("imageSitesImageOne.ActualHeight [" + imageSitesImageOne.ActualHeight + "]");
+
+            double visibleWindowActualHeight = this.ActualHeight - 220;
+            double visibleWindowActualWidth = lgridImageContents.DesiredSize.Width - lgridImageContents.Margin.Left - lgridImageContents.Margin.Right;
+
+            int RowSpanProperty = 1;
+            int ColumnSpanProperty = 2;
+            double height = 0, width = 0;
+
+            if (dispinfoSelectContents.ImageList.Count > 4)
             {
-                imagePackage.Source = null;
-            }
+                //Debug.Print("lgridImageContents.ColumnDefinitions[0].ActualWidth [" + lgridImageContents.ColumnDefinitions[0].ActualWidth + "]");
+                //Debug.Print("lgridImageContents.ColumnDefinitions[1].ActualWidth [" + lgridImageContents.ColumnDefinitions[1].ActualWidth + "]");
+                //Debug.Print("imageSitesImageOne.ActualWidth [" + imageSitesImageOne.ActualWidth + "]");
+                //Debug.Print("imageSitesImageOne.ActualHeight [" + imageSitesImageOne.ActualHeight + "]");
+                height = visibleWindowActualHeight / 2;
+                if (visibleWindowActualWidth > 0)
+                    width = visibleWindowActualWidth / 2;
+                ColumnSpanProperty = 1;
 
-            // ImageContents
-            // Visibleの場合のみ表示
-            //   Kind == 1 ( File )
-            //     isThumbnail
-            //       true  サムネイル画像を表示
-            //       false Dirがあれば、Dir内の画像、無い場合はパッケージを表示、ImagePackageを非表示
-            //   Kind == 2 ( Site )
-            if (image.IsThumbnail)
-            {
-                List<FileInfo> listFileInfo = image.listImageFileInfo;
-
-                if (listFileInfo != null && listFileInfo.Count == 1)
+                if (dispctrlIsDisplayImageUseColumn == false)
                 {
-                    imageSitesImageOne.Source = ImageMethod.GetImageStream(listFileInfo[0].FullName);
-                    imageSitesImageOne.ToolTip = listFileInfo[0].Name;
-                    imageSitesImageTwo.Visibility = Visibility.Collapsed;
-                    imageSitesImageThree.Visibility = Visibility.Collapsed;
-                    imageSitesImageFour.Visibility = Visibility.Collapsed;
-
-                    imageSitesImageOne.SetValue(Grid.RowSpanProperty, 4);
-                    imageSitesImageOne.SetValue(Grid.ColumnSpanProperty, 2);
-
-                    BitmapImage bitmapImage = (BitmapImage)imageSitesImageOne.Source;
-                    imageSitesImageOne.Width = lgridMain.ColumnDefinitions[MAIN_COLUMN_NO_CONTENTS].ActualWidth;
-                    imageSitesImageOne.Height = (imageSitesImageOne.Width / bitmapImage.Width) * bitmapImage.Height;
-                    imageSitesImageOne.Stretch = Stretch.Uniform;
-                }
-                else if (listFileInfo.Count > 1)
-                {
+                    imageSitesImageOne.SetValue(Grid.RowProperty, 0);
                     imageSitesImageOne.SetValue(Grid.RowSpanProperty, 1);
-                    imageSitesImageOne.SetValue(Grid.ColumnSpanProperty, 2);
-
-                    imageSitesImageOne.Width = imageSitesImageTwo.Width;
-                    imageSitesImageOne.Height = imageSitesImageTwo.Height;
-
-                    if (listFileInfo.Count >= 1)
-                    {
-                        imageSitesImageOne.Source = ImageMethod.GetImageStream(listFileInfo[0].FullName);
-                        imageSitesImageOne.ToolTip = listFileInfo[0].Name;
-                        imageSitesImageOne.Visibility = Visibility.Visible;
-                    }
-                    if (listFileInfo.Count >= 2)
-                    {
-                        imageSitesImageTwo.SetValue(Grid.RowProperty, 1);
-                        imageSitesImageTwo.SetValue(Grid.ColumnSpanProperty, 2);
-                        imageSitesImageTwo.Source = ImageMethod.GetImageStream(listFileInfo[1].FullName);
-                        imageSitesImageTwo.ToolTip = listFileInfo[1].Name;
-                        imageSitesImageTwo.Visibility = Visibility.Visible;
-                    }
-                    else
-                        imageSitesImageTwo.Visibility = Visibility.Collapsed;
-
-                    if (listFileInfo.Count >= 3)
-                    {
-                        imageSitesImageThree.SetValue(Grid.RowProperty, 2);
-                        imageSitesImageThree.SetValue(Grid.ColumnSpanProperty, 2);
-                        imageSitesImageThree.Source = ImageMethod.GetImageStream(listFileInfo[2].FullName);
-                        imageSitesImageThree.ToolTip = listFileInfo[2].Name;
-                        imageSitesImageThree.Visibility = Visibility.Visible;
-                    }
-                    else
-                        imageSitesImageThree.Visibility = Visibility.Collapsed;
-
-                    if (listFileInfo.Count >= 4)
-                    {
-                        imageSitesImageFour.SetValue(Grid.RowProperty, 3);
-                        imageSitesImageFour.SetValue(Grid.ColumnSpanProperty, 3);
-                        imageSitesImageFour.Source = ImageMethod.GetImageStream(listFileInfo[3].FullName);
-                        imageSitesImageFour.ToolTip = listFileInfo[3].Name;
-                        imageSitesImageFour.Visibility = Visibility.Visible;
-                    }
-                    else
-                        imageSitesImageFour.Visibility = Visibility.Collapsed;
-
-                }
-            }
-            else
-            {
-                List<FileInfo> listFileInfo = image.listImageFileInfo;
-                txtbImageInfo.Text = image.DisplayPage;
-
-                txtStatusBar.Text = Path.Combine(myMovieContents.Path, myMovieContents.Name);
-                txtStatusBarFileLength.Text = CommonMethod.GetDisplaySize(myMovieContents.Size);
-
-                if (listFileInfo.Count > 1)
-                {
-                    imageSitesImageOne.SetValue(Grid.RowSpanProperty, 1);
+                    imageSitesImageOne.SetValue(Grid.ColumnProperty, 0);
                     imageSitesImageOne.SetValue(Grid.ColumnSpanProperty, 1);
-
-                    imageSitesImageOne.Width = imageSitesImageTwo.Width;
-                    imageSitesImageOne.Height = imageSitesImageTwo.Height;
-
-                    if (listFileInfo.Count >= 1)
-                    {
-                        imageSitesImageOne.Source = ImageMethod.GetImageStream(listFileInfo[0].FullName);
-                        imageSitesImageOne.ToolTip = listFileInfo[0].Name;
-                        imageSitesImageOne.Visibility = Visibility.Visible;
-                    }
-                    if (listFileInfo.Count >= 2)
-                    {
-                        imageSitesImageTwo.Source = ImageMethod.GetImageStream(listFileInfo[1].FullName);
-                        imageSitesImageTwo.ToolTip = listFileInfo[1].Name;
-                        imageSitesImageTwo.Visibility = Visibility.Visible;
-                    }
-                    else
-                        imageSitesImageTwo.Visibility = Visibility.Collapsed;
-
-                    if (listFileInfo.Count >= 3)
-                    {
-                        imageSitesImageThree.Source = ImageMethod.GetImageStream(listFileInfo[2].FullName);
-                        imageSitesImageThree.ToolTip = listFileInfo[2].Name;
-                        imageSitesImageThree.Visibility = Visibility.Visible;
-                    }
-                    else
-                        imageSitesImageThree.Visibility = Visibility.Collapsed;
-
-                    if (listFileInfo.Count >= 4)
-                    {
-                        imageSitesImageFour.Source = ImageMethod.GetImageStream(listFileInfo[3].FullName);
-                        imageSitesImageFour.ToolTip = listFileInfo[3].Name;
-                        imageSitesImageFour.Visibility = Visibility.Visible;
-                    }
-                    else
-                        imageSitesImageFour.Visibility = Visibility.Collapsed;
-                }
-                else
-                {
-                    if (listFileInfo.Count >= 1)
-                    {
-                        imageSitesImageOne.Source = ImageMethod.GetImageStream(listFileInfo[0].FullName);
-                        imageSitesImageOne.ToolTip = listFileInfo[0].Name;
-                        imageSitesImageOne.Visibility = Visibility.Visible;
-                    }
-                    else
-                        imageSitesImageOne.Source = null;
-
-                    imageSitesImageTwo.Visibility = Visibility.Collapsed;
-                    imageSitesImageThree.Visibility = Visibility.Collapsed;
-                    imageSitesImageFour.Visibility = Visibility.Collapsed;
-
-                    imageSitesImageOne.SetValue(Grid.RowSpanProperty, 2);
-                    imageSitesImageOne.SetValue(Grid.ColumnSpanProperty, 2);
+                    imageSitesImageTwo.SetValue(Grid.RowProperty, 0);
+                    imageSitesImageTwo.SetValue(Grid.ColumnProperty, 1);
+                    imageSitesImageThree.SetValue(Grid.RowProperty, 1);
+                    imageSitesImageThree.SetValue(Grid.ColumnProperty, 0);
+                    imageSitesImageFour.SetValue(Grid.RowProperty, 1);
+                    imageSitesImageFour.SetValue(Grid.ColumnProperty, 1);
+                    dispctrlIsDisplayImageUseColumn = true;
+                    Debug.Print("dispctrlIsDisplayImageUseColumn = true になりました");
                 }
             }
+            else
+            {
+                height = visibleWindowActualHeight / dispinfoSelectContents.CurrentImages.Length;
+                ColumnSpanProperty = 2;
+                imageSitesImageOne.Width = visibleWidth;
+                if (dispctrlIsDisplayImageUseColumn == true)
+                {
+                    imageSitesImageOne.SetValue(Grid.RowProperty, 0);
+                    imageSitesImageOne.SetValue(Grid.ColumnProperty, 0);
+                    imageSitesImageOne.SetValue(Grid.ColumnSpanProperty, 2);
+                    imageSitesImageTwo.SetValue(Grid.RowProperty, 1);
+                    imageSitesImageTwo.SetValue(Grid.ColumnProperty, 0);
+                    imageSitesImageTwo.SetValue(Grid.ColumnSpanProperty, 2);
+                    imageSitesImageThree.SetValue(Grid.RowProperty, 2);
+                    imageSitesImageThree.SetValue(Grid.ColumnProperty, 0);
+                    imageSitesImageThree.SetValue(Grid.ColumnSpanProperty, 2);
+                    imageSitesImageFour.SetValue(Grid.RowProperty, 3);
+                    imageSitesImageFour.SetValue(Grid.ColumnProperty, 0);
+                    imageSitesImageFour.SetValue(Grid.ColumnSpanProperty, 2);
+                    dispctrlIsDisplayImageUseColumn = false;
+                }
+            }
+
+            if (dispinfoSelectContents.CurrentImages.Length == 1)
+            {
+                imageSitesImageOne.Height = visibleHeight;
+
+                lgridImageContents.RowDefinitions[0].Height = new GridLength(height);
+                lgridImageContents.RowDefinitions[1].Height = new GridLength(0);
+                lgridImageContents.RowDefinitions[2].Height = new GridLength(0);
+                lgridImageContents.RowDefinitions[3].Height = new GridLength(0);
+            }
+
+            if (dispinfoSelectContents.CurrentImages.Length == 2)
+            {
+                lgridImageContents.RowDefinitions[0].Height = new GridLength(height);
+                lgridImageContents.RowDefinitions[1].Height = new GridLength(height);
+                lgridImageContents.RowDefinitions[2].Height = new GridLength(0);
+                lgridImageContents.RowDefinitions[3].Height = new GridLength(0);
+            }
+            else if (dispinfoSelectContents.CurrentImages.Length == 3)
+            {
+                lgridImageContents.RowDefinitions[0].Height = new GridLength(height);
+                lgridImageContents.RowDefinitions[1].Height = new GridLength(height);
+                lgridImageContents.RowDefinitions[2].Height = new GridLength(height);
+                lgridImageContents.RowDefinitions[3].Height = new GridLength(0);
+            }
+            //else if (dispinfoSelectContents.ImageList.Count == 4)
+            //    RowSpanProperty = 1;
+            else if (dispinfoSelectContents.ImageList.Count > 4)
+            {
+                lgridImageContents.RowDefinitions[0].Height = new GridLength(height);
+                lgridImageContents.RowDefinitions[1].Height = new GridLength(height);
+                lgridImageContents.RowDefinitions[2].Height = new GridLength(0);
+                lgridImageContents.RowDefinitions[3].Height = new GridLength(0);
+
+                lgridImageContents.ColumnDefinitions[0].Width = new GridLength(width);
+                lgridImageContents.ColumnDefinitions[1].Width = new GridLength(width);
+
+                imageSitesImageOne.Width = width;
+            }
+
+            DisplayMedia(dispinfoSelectContents.CurrentImages[0], imageSitesImageOne, mediaSitesImageGifOne, RowSpanProperty, ColumnSpanProperty);
+
+            if (dispinfoSelectContents.CurrentImages.Length >= 2)
+                DisplayMedia(dispinfoSelectContents.CurrentImages[1], imageSitesImageTwo, mediaSitesImageGifTwo, RowSpanProperty, ColumnSpanProperty);
+
+            if (dispinfoSelectContents.CurrentImages.Length >= 3)
+                DisplayMedia(dispinfoSelectContents.CurrentImages[2], imageSitesImageThree, mediaSitesImageGifThree, RowSpanProperty, ColumnSpanProperty);
+
+            if (dispinfoSelectContents.CurrentImages.Length >= 4)
+                DisplayMedia(dispinfoSelectContents.CurrentImages[3], imageSitesImageFour, mediaSitesImageGifFour, RowSpanProperty, ColumnSpanProperty);
         }
         private void dgridMovieContents_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             dispinfoSelectContents = (MovieContents)dgridMovieContents.SelectedItem;
-
-            image = null;
 
             if (dispinfoSelectContents != null)
             {
@@ -681,7 +716,7 @@ namespace WpfMovieManager2Mysql
             else
                 return;
 
-            dispinfoSelectContents.SetMovieInfo();
+            dispinfoSelectContents.ParseMedia();
 
             OnDisplayImage(dispinfoSelectContents, dispinfoSelectGroup);
             if (dispinfoContentsVisibleKind == CONTENTS_VISIBLE_KIND_DETAIL)
@@ -896,8 +931,7 @@ namespace WpfMovieManager2Mysql
             if (dispinfoSelectContents == null)
                 return;
 
-            if (dispinfoSelectContents.Kind == MovieContents.KIND_FILE
-                || dispinfoSelectContents.Kind == MovieContents.KIND_CONTENTS)
+            if (dispinfoSelectContents.Type == "file")
                 lgridDetail = lgridFileDetail;
             else
                 lgridDetail = lgridSiteDetail;
@@ -1599,17 +1633,6 @@ namespace WpfMovieManager2Mysql
             txtFileDetailContentsUpdateDate.Background = null;
         }
 
-        private void OnDisplayImageMovePage(object sender, RoutedEventArgs e)
-        {
-            Button button = sender as Button;
-
-            if (button.Content.ToString() == "Before")
-                image.Before();
-            else
-                image.Next();
-
-            OnDisplayImage(dispinfoSelectContents, dispinfoSelectGroup);
-        }
         private void lgridImageContents_MouseDown(object sender, MouseButtonEventArgs e)
         {
             Grid lgrid = sender as Grid;
@@ -1628,27 +1651,15 @@ namespace WpfMovieManager2Mysql
                 // http://stackoverflow.com/questions/6363312/get-grid-cell-by-mouse-click
                 if (e.ClickCount == 1) // for double-click, remove this condition if only want single click
                 {
-                    // SITE以外のDIRなどの場合
-                    if (image == null) return;
-
+                    double widthMiddlePosi = lgridImageContents.ActualWidth / 2;
                     var point = Mouse.GetPosition(lgridImageContents);
 
-                    int col = 0;
-                    double accumulatedWidth = 0.0;
+                    Debug.Print("lgridImageContents.ActualWidth [" + lgridImageContents.ActualWidth + "]   point.X [" + point.X + "]  point.Y [" + point.Y + "]");
 
-                    // calc col mouse was over
-                    foreach (var columnDefinition in lgridImageContents.ColumnDefinitions)
-                    {
-                        accumulatedWidth += columnDefinition.ActualWidth;
-                        if (accumulatedWidth >= point.X)
-                            break;
-                        col++;
-                    }
-
-                    if (col == 0)
-                        image.Before();
+                    if (widthMiddlePosi >= point.X)
+                        dispinfoSelectContents.BackImage();
                     else
-                        image.Next();
+                        dispinfoSelectContents.NextImage();
 
                     OnDisplayImage(dispinfoSelectContents, dispinfoSelectGroup);
                 }
@@ -2010,6 +2021,12 @@ namespace WpfMovieManager2Mysql
             }
             else
                 txtStatusBarFileDate.Text = "";
+        }
+
+        private void mediaSitesImageGifOne_MediaEnded(object sender, RoutedEventArgs e)
+        {
+            mediaSitesImageGifOne.Position = new TimeSpan(0, 0, 1);
+            mediaSitesImageGifOne.Play();
         }
     }
 }

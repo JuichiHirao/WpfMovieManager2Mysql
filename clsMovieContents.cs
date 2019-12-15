@@ -22,8 +22,9 @@ namespace WpfMovieManager2Mysql
         public const int KIND_SITECHK_UNREGISTERED = 11;
         public const int KIND_SITECHK_NOTEXIST = 12;
 
-        public static string REGEX_MOVIE_EXTENTION = @".*\.avi$|.*\.wmv$|.*\.mpg$|.*ts$|.*divx$|.*mp4$|.*asf$|.*mkv$|.*rm$|.*rmvb$|.*m4v$|.*3gp$";
-        //  @".*\.avi$|.*\.wmv$|.*\.mpg$|.*ts$|.*divx$|.*mp4$|.*asf$|.*jpg$|.*jpeg$|.*iso$|.*mkv$";
+        public static string REGEX_MOVIE_EXTENTION = @".*\.avi$|.*\.wmv$|.*\.mpg$|.*ts$|.*divx$|.*mp4$|.*asf$|.*mkv$|.*rm$|.*rmvb$|.*m4v$|.*3gp$|.*mov$";
+        public static string REGEX_IMAGE_EXTENTION = @".*\.jpg$|.*\.png$|.*\.gif$";
+        //  @".*\.avi$|.*\.wmv$|.*\.mpg$|.*ts$|.*divx$|.*mp4$|.*asf$|.*jpg$|.*jpesg$|.*iso$|.*mkv$";
 
         public static string TABLE_KIND_MOVIE_CONTENTS = "MOVIE_CONTENTS_RENEW";
         public static string TABLE_KIND_MOVIE_FILESCONTENTS = "MOVIE_FILES";
@@ -50,52 +51,149 @@ namespace WpfMovieManager2Mysql
             Comment = "";
         }
 
-        public void SetMovieInfo()
+        public void ParseMedia()
         {
-            if (String.IsNullOrEmpty(Path))
-                return;
+            string[] files = Directory.GetFiles(Path, @Name + "*");
 
-            ExistList = "";
-            // StoreLabelにスペース文字列が存在する場合、SiteContentsかもなので、listファイルをチェック
-            if (Type == "site")
+            string pathname = System.IO.Path.Combine(Path, Name);
+
+            // ListFile, PackageImage, ImageList, MovieList
+            ImageList = new List<FileInfo>();
+            MovieList = new List<FileInfo>();
+            PackageImage = null;
+            ThumbnailImage = null;
+
+            Regex reImage = new Regex(REGEX_IMAGE_EXTENTION);
+            Regex reMovie = new Regex(REGEX_MOVIE_EXTENTION);
+
+            foreach(string file in files)
             {
-                string pathname = System.IO.Path.Combine(Path, Name);
+                if (reImage.IsMatch(file))
+                {
+                    FileInfo fileinfo = new FileInfo(file);
+                    if (fileinfo.Name.Replace(fileinfo.Extension, "") == Name)
+                        PackageImage = fileinfo;
+                    else if (fileinfo.Name.Replace(fileinfo.Extension, "") == Name + "_th")
+                        ThumbnailImage = fileinfo;
+                    else
+                        ImageList.Add(new FileInfo(file));
+                }
+
+                if (reMovie.IsMatch(file))
+                    MovieList.Add(new FileInfo(file));
+            }
+            if (Directory.Exists(pathname))
+            {
                 string listFilename = System.IO.Path.Combine(pathname, "list");
 
                 if (File.Exists(listFilename))
                 {
-                    ExistList = listFilename;
-                    return;
+                    ListFile = new FileInfo(listFilename);
+                }
+                files = Directory.GetFiles(pathname, "*");
+
+                foreach (string file in files)
+                {
+                    if (reImage.IsMatch(file))
+                    {
+                        if (PackageImage == null)
+                            PackageImage = new FileInfo(file);
+                        else
+                            ImageList.Add(new FileInfo(file));
+                    }
+
+                    if (reMovie.IsMatch(file))
+                        MovieList.Add(new FileInfo(file));
                 }
             }
 
-            string[] tempExistMovie = null;
-            try
-            {
-                tempExistMovie = Directory.GetFiles(Path, @Name + "*");
-            }
-            catch (DirectoryNotFoundException ex)
-            {
-                return;
-            }
-
-            List<string> listExistMovie = new List<string>();
-            foreach (string file in tempExistMovie)
-            {
-                if (file.IndexOf("jpg") > 0)
-                    continue;
-
-                listExistMovie.Add(file);
-            }
-
-            if (listExistMovie.Count > 0)
-                ExistMovie = listExistMovie.ToArray();
+            this.ImagePosition = 0;
+            this.BackImage();
 
             return;
         }
 
-        public string ExistList { get; set; }
-        public string[] ExistMovie { get; set; }
+        public FileInfo ListFile { get; set; }
+
+        public FileInfo PackageImage { get; set; }
+
+        public FileInfo ThumbnailImage { get; set; }
+
+        public List<FileInfo> ImageList { get; set; }
+
+        int ImagePosition = 0;
+
+        public FileInfo[] CurrentImages = null;
+
+        public void BackImage()
+        {
+            if (ImageList.Count <= 0)
+            {
+                if (PackageImage != null && ThumbnailImage == null)
+                {
+                    CurrentImages = new FileInfo[1];
+                    CurrentImages[0] = PackageImage;
+                }
+
+                return;
+            }
+
+            int posi = ImagePosition - 4;
+
+            if (posi < 0)
+                posi = 0;
+
+            int size;
+            if (posi + 4 < ImageList.Count)
+                size = 4;
+            else
+                size = ImageList.Count - ImagePosition;
+
+            CurrentImages = new FileInfo[size];
+
+            if (size >= 1)
+                CurrentImages[0] = ImageList[posi];
+            if (size >= 2)
+                CurrentImages[1] = ImageList[posi+1];
+            if (size >= 3)
+                CurrentImages[2] = ImageList[posi+2];
+            if (size >= 4)
+                CurrentImages[3] = ImageList[posi+3];
+
+            ImagePosition = posi;
+        }
+
+        public void NextImage()
+        {
+            if (ImageList.Count <= 0)
+                return;
+
+            int posi = ImagePosition + 4;
+
+            if (posi >= ImageList.Count)
+                posi = ImagePosition;
+
+            int size;
+            if (posi + 4 < ImageList.Count)
+                size = 4;
+            else
+                size = ImageList.Count - ImagePosition;
+
+            CurrentImages = new FileInfo[size];
+
+            if (size >= 1)
+                CurrentImages[0] = ImageList[posi];
+            if (size >= 2)
+                CurrentImages[1] = ImageList[posi+1];
+            if (size >= 3)
+                CurrentImages[2] = ImageList[posi+2];
+            if (size >= 4)
+                CurrentImages[3] = ImageList[posi+3];
+
+            ImagePosition = posi;
+        }
+
+        public List<FileInfo> MovieList { get; set; }
 
         public string Type { get; set; }
 
@@ -134,6 +232,7 @@ namespace WpfMovieManager2Mysql
             get
             {
                 return _Name;
+
             }
             set
             {
