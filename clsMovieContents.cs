@@ -90,25 +90,25 @@ namespace WpfMovieManager2Mysql
                 {
                     ListFile = new FileInfo(listFilename);
                 }
-                else
+                files = Directory.GetFiles(pathname, "*");
+
+                foreach (string file in files)
                 {
-                    files = Directory.GetFiles(pathname, "*");
-
-                    foreach (string file in files)
+                    if (reImage.IsMatch(file))
                     {
-                        if (reImage.IsMatch(file))
-                        {
-                            if (PackageImage == null)
-                                PackageImage = new FileInfo(file);
-                            else
-                                ImageList.Add(new FileInfo(file));
-                        }
-
-                        if (reMovie.IsMatch(file))
-                            MovieList.Add(new FileInfo(file));
+                        if (PackageImage == null)
+                            PackageImage = new FileInfo(file);
+                        else
+                            ImageList.Add(new FileInfo(file));
                     }
+
+                    if (reMovie.IsMatch(file))
+                        MovieList.Add(new FileInfo(file));
                 }
             }
+
+            this.ImagePosition = 0;
+            this.BackImage();
 
             return;
         }
@@ -167,6 +167,70 @@ namespace WpfMovieManager2Mysql
         public FileInfo ThumbnailImage { get; set; }
 
         public List<FileInfo> ImageList { get; set; }
+
+        int ImagePosition = 0;
+
+        public FileInfo[] CurrentImages = null;
+
+        public void BackImage()
+        {
+            if (ImageList.Count <= 0)
+                return;
+
+            int posi = ImagePosition - 4;
+
+            if (posi < 0)
+                posi = 0;
+
+            int size;
+            if (posi + 4 < ImageList.Count)
+                size = 4;
+            else
+                size = ImageList.Count - ImagePosition;
+
+            CurrentImages = new FileInfo[size];
+
+            if (size >= 1)
+                CurrentImages[0] = ImageList[posi];
+            if (size >= 2)
+                CurrentImages[1] = ImageList[posi+1];
+            if (size >= 3)
+                CurrentImages[2] = ImageList[posi+2];
+            if (size >= 4)
+                CurrentImages[3] = ImageList[posi+3];
+
+            ImagePosition = posi;
+        }
+
+        public void NextImage()
+        {
+            if (ImageList.Count <= 0)
+                return;
+
+            int posi = ImagePosition + 4;
+
+            if (posi >= ImageList.Count)
+                posi = ImagePosition;
+
+            int size;
+            if (posi + 4 < ImageList.Count)
+                size = 4;
+            else
+                size = ImageList.Count - ImagePosition;
+
+            CurrentImages = new FileInfo[size];
+
+            if (size >= 1)
+                CurrentImages[0] = ImageList[posi];
+            if (size >= 2)
+                CurrentImages[1] = ImageList[posi+1];
+            if (size >= 3)
+                CurrentImages[2] = ImageList[posi+2];
+            if (size >= 4)
+                CurrentImages[3] = ImageList[posi+3];
+
+            ImagePosition = posi;
+        }
 
         public List<FileInfo> MovieList { get; set; }
 
