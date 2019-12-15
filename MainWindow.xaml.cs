@@ -604,24 +604,11 @@ namespace WpfMovieManager2Mysql
             double visibleWidth = lgridImageContents.DesiredSize.Width - lgridImageContents.Margin.Left - lgridImageContents.Margin.Right;
             Debug.Print("lgridImageContents Height有効 [" + visibleHeight + "]  DesiredSize Height [" + lgridImageContents.DesiredSize.Height + "] ");
             Debug.Print("lgridImageContents Width有効 [" + visibleWidth + "]  DesiredSize Width [" + lgridImageContents.DesiredSize.Width + "] ");
+            Debug.Print("imageSitesImageOne.ActualWidth [" + imageSitesImageOne.ActualWidth + "]");
+            Debug.Print("imageSitesImageOne.ActualHeight [" + imageSitesImageOne.ActualHeight + "]");
 
             double visibleWindowActualHeight = this.ActualHeight - 220;
             double visibleWindowActualWidth = lgridImageContents.DesiredSize.Width - lgridImageContents.Margin.Left - lgridImageContents.Margin.Right;
-
-            // KoreanPで画像が1枚でPackageにのみある場合
-            if (dispinfoSelectContents.ImageList.Count <= 0)
-            {
-                imageSitesImageTwo.Visibility = Visibility.Collapsed;
-                imageSitesImageThree.Visibility = Visibility.Collapsed;
-                imageSitesImageFour.Visibility = Visibility.Collapsed;
-                lgridImageContents.RowDefinitions[0].Height = new GridLength(visibleWindowActualHeight);
-                lgridImageContents.RowDefinitions[1].Height = new GridLength(0);
-                lgridImageContents.RowDefinitions[2].Height = new GridLength(0);
-                lgridImageContents.RowDefinitions[3].Height = new GridLength(0);
-                DisplayMedia(dispinfoSelectContents.PackageImage, imageSitesImageOne, mediaSitesImageGifOne, 4, 2);
-
-                return;
-            }
 
             int RowSpanProperty = 1;
             int ColumnSpanProperty = 2;
@@ -634,7 +621,8 @@ namespace WpfMovieManager2Mysql
                 //Debug.Print("imageSitesImageOne.ActualWidth [" + imageSitesImageOne.ActualWidth + "]");
                 //Debug.Print("imageSitesImageOne.ActualHeight [" + imageSitesImageOne.ActualHeight + "]");
                 height = visibleWindowActualHeight / 2;
-                width = visibleWindowActualWidth / 2;
+                if (visibleWindowActualWidth > 0)
+                    width = visibleWindowActualWidth / 2;
                 ColumnSpanProperty = 1;
 
                 if (dispctrlIsDisplayImageUseColumn == false)
@@ -657,6 +645,7 @@ namespace WpfMovieManager2Mysql
             {
                 height = visibleWindowActualHeight / dispinfoSelectContents.CurrentImages.Length;
                 ColumnSpanProperty = 2;
+                imageSitesImageOne.Width = visibleWidth;
                 if (dispctrlIsDisplayImageUseColumn == true)
                 {
                     imageSitesImageOne.SetValue(Grid.RowProperty, 0);
@@ -673,6 +662,16 @@ namespace WpfMovieManager2Mysql
                     imageSitesImageFour.SetValue(Grid.ColumnSpanProperty, 2);
                     dispctrlIsDisplayImageUseColumn = false;
                 }
+            }
+
+            if (dispinfoSelectContents.CurrentImages.Length == 1)
+            {
+                imageSitesImageOne.Height = visibleHeight;
+
+                lgridImageContents.RowDefinitions[0].Height = new GridLength(height);
+                lgridImageContents.RowDefinitions[1].Height = new GridLength(0);
+                lgridImageContents.RowDefinitions[2].Height = new GridLength(0);
+                lgridImageContents.RowDefinitions[3].Height = new GridLength(0);
             }
 
             if (dispinfoSelectContents.CurrentImages.Length == 2)
@@ -730,7 +729,6 @@ namespace WpfMovieManager2Mysql
                 return;
 
             dispinfoSelectContents.ParseMedia();
-            //dispinfoSelectContents.SetMovieInfo();
 
             OnDisplayImage(dispinfoSelectContents, dispinfoSelectGroup);
             if (dispinfoContentsVisibleKind == CONTENTS_VISIBLE_KIND_DETAIL)

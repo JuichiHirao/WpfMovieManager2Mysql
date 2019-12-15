@@ -113,53 +113,6 @@ namespace WpfMovieManager2Mysql
             return;
         }
 
-        public void SetMovieInfo()
-        {
-            if (String.IsNullOrEmpty(Path))
-                return;
-
-            ExistList = "";
-            // StoreLabelにスペース文字列が存在する場合、SiteContentsかもなので、listファイルをチェック
-            if (Type == "site")
-            {
-                string pathname = System.IO.Path.Combine(Path, Name);
-                string listFilename = System.IO.Path.Combine(pathname, "list");
-
-                if (File.Exists(listFilename))
-                {
-                    ExistList = listFilename;
-                    return;
-                }
-            }
-
-            string[] tempExistMovie = null;
-            try
-            {
-                tempExistMovie = Directory.GetFiles(Path, @Name + "*");
-            }
-            catch (DirectoryNotFoundException ex)
-            {
-                return;
-            }
-
-            List<string> listExistMovie = new List<string>();
-            foreach (string file in tempExistMovie)
-            {
-                if (file.IndexOf("jpg") > 0)
-                    continue;
-
-                listExistMovie.Add(file);
-            }
-
-            if (listExistMovie.Count > 0)
-                ExistMovie = listExistMovie.ToArray();
-
-            return;
-        }
-
-        public string ExistList { get; set; }
-        public string[] ExistMovie { get; set; }
-
         public FileInfo ListFile { get; set; }
 
         public FileInfo PackageImage { get; set; }
@@ -175,7 +128,15 @@ namespace WpfMovieManager2Mysql
         public void BackImage()
         {
             if (ImageList.Count <= 0)
+            {
+                if (PackageImage != null && ThumbnailImage == null)
+                {
+                    CurrentImages = new FileInfo[1];
+                    CurrentImages[0] = PackageImage;
+                }
+
                 return;
+            }
 
             int posi = ImagePosition - 4;
 
