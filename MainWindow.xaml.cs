@@ -43,8 +43,6 @@ namespace WpfMovieManager2Mysql
 
         MySqlDbConnection dbcon;
 
-        common.Image image = null;
-
         StoreCollection ColViewStore;
         FavCollection ColViewFav;
 
@@ -537,6 +535,9 @@ namespace WpfMovieManager2Mysql
                 return;
             }
 
+            if (myMovieContents.PackageImage == null && myMovieContents.ThumbnailImage == null && myMovieContents.ImageList.Count <= 0)
+                return;
+
             lgridImageContents.RowDefinitions[0].Height = GridLength.Auto;
             lgridImageContents.RowDefinitions[1].Height = GridLength.Auto;
             lgridImageContents.RowDefinitions[2].Height = GridLength.Auto;
@@ -549,17 +550,6 @@ namespace WpfMovieManager2Mysql
             mediaSitesImageGifThree.Source = null;
             imageSitesImageFour.Source = null;
             mediaSitesImageGifFour.Source = null;
-
-            // 未コピーの場合は何もしない
-            if (myMovieContents.PackageImage == null && myMovieContents.ThumbnailImage == null
-                && myMovieContents.ImageList.Count <= 0)
-                return;
-
-            if (image == null) image = new common.Image(myMovieContents, myTargetGroup);
-
-            // PackageImage
-            // Visibleの場合のみ表示
-            FileInfo fileInfoPackage = image.PackageFileInfo;
 
             if (myMovieContents.PackageImage != null && myMovieContents.ThumbnailImage != null)
             {
@@ -717,8 +707,6 @@ namespace WpfMovieManager2Mysql
         private void dgridMovieContents_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             dispinfoSelectContents = (MovieContents)dgridMovieContents.SelectedItem;
-
-            image = null;
 
             if (dispinfoSelectContents != null)
             {

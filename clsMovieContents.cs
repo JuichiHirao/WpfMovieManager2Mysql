@@ -232,6 +232,7 @@ namespace WpfMovieManager2Mysql
             get
             {
                 return _Name;
+
             }
             set
             {
