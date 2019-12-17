@@ -588,17 +588,23 @@ namespace WpfMovieManager2Mysql
 
 
             //Debug.Print("Window.ActualHeight [" + this.ActualHeight + "] AWidth [" + this.ActualWidth + "]");
-            Debug.Print("Package [" + existPackage + "]  ImageList.Count [" + myMovieContents.ImageList.Count + "]個 Current [" + currentLength + "]個");
-            Debug.Print("lgridImageContents AHeight [" + lgridImageContents.ActualHeight + "] AWidth [" + lgridImageContents.ActualWidth + "]");
-            double visibleHeight = lgridImageContents.DesiredSize.Height - lgridImageContents.Margin.Top - lgridImageContents.Margin.Bottom;
-            double visibleWidth = lgridImageContents.DesiredSize.Width - lgridImageContents.Margin.Left - lgridImageContents.Margin.Right;
-            Debug.Print("lgridImageContents Height有効 [" + visibleHeight + "]  DesiredSize Height [" + lgridImageContents.DesiredSize.Height + "] ");
-            Debug.Print("lgridImageContents Width有効 [" + visibleWidth + "]  DesiredSize Width [" + lgridImageContents.DesiredSize.Width + "] ");
-            Debug.Print("imageSitesImageOne.ActualWidth [" + imageSitesImageOne.ActualWidth + "]");
-            Debug.Print("imageSitesImageOne.ActualHeight [" + imageSitesImageOne.ActualHeight + "]");
+            //Debug.Print("Package [" + existPackage + "]  ImageList.Count [" + myMovieContents.ImageList.Count + "]個 Current [" + currentLength + "]個");
+            //Debug.Print("lgridImageContents AHeight [" + lgridImageContents.ActualHeight + "] AWidth [" + lgridImageContents.ActualWidth + "]");
+            //double visibleHeight = lgridImageContents.DesiredSize.Height - lgridImageContents.Margin.Top - lgridImageContents.Margin.Bottom;
+            //double visibleWidth = lgridImageContents.DesiredSize.Width - lgridImageContents.Margin.Left - lgridImageContents.Margin.Right;
+            //Debug.Print("lgridImageContents Height有効 [" + visibleHeight + "]  DesiredSize Height [" + lgridImageContents.DesiredSize.Height + "] ");
+            //Debug.Print("lgridImageContents Width有効 [" + visibleWidth + "]  DesiredSize Width [" + lgridImageContents.DesiredSize.Width + "] ");
+            //Debug.Print("imageSitesImageOne.ActualWidth [" + imageSitesImageOne.ActualWidth + "]");
+            //Debug.Print("imageSitesImageOne.ActualHeight [" + imageSitesImageOne.ActualHeight + "]");
 
             double visibleWindowActualHeight = this.ActualHeight - 220;
             double visibleWindowActualWidth = lgridImageContents.DesiredSize.Width - lgridImageContents.Margin.Left - lgridImageContents.Margin.Right;
+
+            if (visibleWindowActualHeight < 0)
+                visibleWindowActualHeight = 100;
+
+            if (visibleWindowActualWidth < 0)
+                visibleWindowActualWidth = 100;
 
             int RowSpanProperty = 1;
             int ColumnSpanProperty = 2;
@@ -635,7 +641,7 @@ namespace WpfMovieManager2Mysql
             {
                 height = visibleWindowActualHeight / dispinfoSelectContents.CurrentImages.Length;
                 ColumnSpanProperty = 2;
-                imageSitesImageOne.Width = visibleWidth;
+                imageSitesImageOne.Width = visibleWindowActualWidth;
                 if (dispctrlIsDisplayImageUseColumn == true)
                 {
                     imageSitesImageOne.SetValue(Grid.RowProperty, 0);
@@ -656,7 +662,7 @@ namespace WpfMovieManager2Mysql
 
             if (dispinfoSelectContents.CurrentImages.Length == 1)
             {
-                imageSitesImageOne.Height = visibleHeight;
+                imageSitesImageOne.Height = visibleWindowActualHeight;
 
                 lgridImageContents.RowDefinitions[0].Height = new GridLength(height);
                 lgridImageContents.RowDefinitions[1].Height = new GridLength(0);

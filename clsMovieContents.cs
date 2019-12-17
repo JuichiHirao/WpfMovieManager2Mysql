@@ -22,7 +22,7 @@ namespace WpfMovieManager2Mysql
         public const int KIND_SITECHK_UNREGISTERED = 11;
         public const int KIND_SITECHK_NOTEXIST = 12;
 
-        public static string REGEX_MOVIE_EXTENTION = @".*\.avi$|.*\.wmv$|.*\.mpg$|.*ts$|.*divx$|.*mp4$|.*asf$|.*mkv$|.*rm$|.*rmvb$|.*m4v$|.*3gp$|.*mov$";
+        public static string REGEX_MOVIE_EXTENTION = @".*\.avi$|.*\.wmv$|.*\.mpg$|.*ts$|.*divx$|.*mp4$|.*asf$|.*mkv$|.*rm$|.*rmvb$|.*m4v$|.*3gp$|.*mov$|.*flv$";
         public static string REGEX_IMAGE_EXTENTION = @".*\.jpg$|.*\.png$|.*\.gif$";
         //  @".*\.avi$|.*\.wmv$|.*\.mpg$|.*ts$|.*divx$|.*mp4$|.*asf$|.*jpg$|.*jpesg$|.*iso$|.*mkv$";
 
