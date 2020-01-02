@@ -87,6 +87,7 @@
     <Compile Include="clsMovieContentsFilterAndSort.cs" />
     <Compile Include="collection\FavCollection.cs" />
     <Compile Include="collection\StoreCollection.cs" />
+    <Compile Include="common\Actress.cs" />
     <Compile Include="common\ClipBoard.cs" />
     <Compile Include="common\CommonMethod.cs" />
     <Compile Include="common\FileContents.cs" />

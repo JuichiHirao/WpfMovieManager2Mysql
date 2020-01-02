@@ -21,6 +21,8 @@ using System.Text;
 using WpfMovieManager2Mysql;
 using WpfMovieManager2.collection;
 using WpfMovieManager2.data;
+using WpfMovieManager2.common;
+using System.Linq;
 
 namespace WpfMovieManager2Mysql
 {
@@ -535,7 +537,8 @@ namespace WpfMovieManager2Mysql
                 return;
             }
 
-            if (myMovieContents.PackageImage == null && myMovieContents.ThumbnailImage == null && myMovieContents.ImageList.Count <= 0)
+            if (myMovieContents.PackageImage == null && myMovieContents.ThumbnailImage == null && 
+                (myMovieContents.ImageList == null || myMovieContents.ImageList.Count <= 0))
                 return;
 
             lgridImageContents.RowDefinitions[0].Height = GridLength.Auto;
@@ -598,14 +601,16 @@ namespace WpfMovieManager2Mysql
             //Debug.Print("imageSitesImageOne.ActualHeight [" + imageSitesImageOne.ActualHeight + "]");
 
             double visibleWindowActualHeight = this.ActualHeight - 220;
-            double visibleWindowActualWidth = lgridImageContents.DesiredSize.Width - lgridImageContents.Margin.Left - lgridImageContents.Margin.Right;
+            //double visibleWindowActualWidth = lgridImageContents.DesiredSize.Width - lgridImageContents.Margin.Left - lgridImageContents.Margin.Right;
+            double visibleWindowActualWidth = lgridImageContents.ActualWidth - lgridImageContents.Margin.Left - lgridImageContents.Margin.Right;
+            double abc = lgridImageContents.ActualWidth;
 
-            if (visibleWindowActualHeight < 0)
+            if (visibleWindowActualHeight <= 0)
                 visibleWindowActualHeight = 100;
 
-            if (visibleWindowActualWidth < 0)
+            if (visibleWindowActualWidth <= 0)
                 visibleWindowActualWidth = 100;
-
+            
             int RowSpanProperty = 1;
             int ColumnSpanProperty = 2;
             double height = 0, width = 0;
@@ -723,6 +728,8 @@ namespace WpfMovieManager2Mysql
                 return;
 
             dispinfoSelectContents.ParseMedia();
+
+            txtStatusBarFileDate.Text = "";
 
             OnDisplayImage(dispinfoSelectContents, dispinfoSelectGroup);
             if (dispinfoContentsVisibleKind == CONTENTS_VISIBLE_KIND_DETAIL)
@@ -1994,39 +2001,35 @@ namespace WpfMovieManager2Mysql
             if (dispinfoSelectContents == null)
                 return;
 
+            string resultEvaluation = "";
+            string evaluation = "";
             if (dispinfoSelectContents.Tag != null && dispinfoSelectContents.Tag.Length > 0)
             {
-                List<MovieContents> matchData = ColViewMovieContents.GetMatchData(dispinfoSelectContents.Tag);
-
-                int unEvaluate = 0, maxEvaluate = 0, avg = 0;
-
-                if (matchData.Count > 0)
+                string[] arrActresses = Actress.ParseTag(dispinfoSelectContents.Tag);
+                foreach(string actress in arrActresses)
                 {
-                    int cnt = 0;
-                    int total = 0;
-                    foreach (MovieContents data in matchData)
-                    {
-                        if (data.Rating <= 0)
-                        {
-                            unEvaluate++;
-                            continue;
-                        }
+                    evaluation = "";
+                    string[] arrData = ColViewFav.GetMatch(actress);
 
-                        if (maxEvaluate < data.Rating)
-                            maxEvaluate = data.Rating;
+                    List<MovieContents> matchData = ColViewMovieContents.GetMatchData(arrData);
+                    List<MovieContents> likeData = ColViewMovieContents.GetLikeFilenameData(arrData);
 
-                        total = total + data.Rating;
-                        cnt++;
-                    }
-                    if (total > 0 && cnt > 0)
-                        avg = total / cnt;
-                    txtStatusBarFileDate.Text = "未 " + unEvaluate + "/" + matchData.Count + "  Max " + maxEvaluate + "  Avg " + avg;
+                    var sumEvaluate = matchData.Sum(x => x.Rating);
+                    var unEvaluate = matchData.Where(x => x.Rating == 0).Count();
+                    var maxEvaluate = matchData.Max(x => x.Rating);
+
+                    if (sumEvaluate <= 0 || matchData.Count - unEvaluate <= 0)
+                        evaluation = String.Format("全未評価 {0} ({1})", matchData.Count, likeData.Count);
+                    else
+                        evaluation = String.Format("未 {0}/全 {1} Max {2} Avg {3} ({4})", unEvaluate, matchData.Count, maxEvaluate, sumEvaluate / (matchData.Count - unEvaluate), likeData.Count);
+
+                    resultEvaluation = String.Format("{0} {1} {2}", resultEvaluation, actress, evaluation);
                 }
+                if (arrActresses.Length == 1)
+                    txtStatusBarFileDate.Text = evaluation;
                 else
-                    txtStatusBarFileDate.Text = "";
+                    txtStatusBar.Text = txtStatusBar.Text + " " + resultEvaluation.Trim();
             }
-            else
-                txtStatusBarFileDate.Text = "";
         }
 
         private void mediaSitesImageGifOne_MediaEnded(object sender, RoutedEventArgs e)

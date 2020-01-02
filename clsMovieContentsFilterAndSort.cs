@@ -216,19 +216,38 @@ namespace WpfMovieManager2Mysql
             return infoData;
         }
 
-        public List<MovieContents> GetMatchData(string myTag)
+        public List<MovieContents> GetMatchData(string[] myArrActress)
         {
-            List<MovieContents> matchData = new List<MovieContents>();
+            List<MovieContents> listMatchData = new List<MovieContents>();
 
             //string[] arrTagActress = myTag.Split(',');
             foreach (MovieContents data in listMovieContens)
             {
-                if (data.Tag.IndexOf(myTag) >= 0)
-                    matchData.Add(data);
-                //if (arrTagActress != null && arrTagActress.Count() > 0)
+                foreach(string actress in myArrActress)
+                {
+                    if (data.Tag.IndexOf(actress) >= 0)
+                        listMatchData.Add(data);
+                }
             }
 
-            return matchData;
+            return listMatchData;
+        }
+
+        public List<MovieContents> GetLikeFilenameData(string[] myArrActress)
+        {
+            List<MovieContents> listMatchData = new List<MovieContents>();
+
+            //string[] arrTagActress = myTag.Split(',');
+            foreach (MovieContents data in listMovieContens)
+            {
+                foreach (string actress in myArrActress)
+                {
+                    if (data.Name.IndexOf(actress) >= 0 && data.Tag.IndexOf(actress) < 0)
+                        listMatchData.Add(data);
+                }
+            }
+
+            return listMatchData;
         }
 
         public void Delete(MovieContents myData)

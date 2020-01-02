@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Data;
+using WpfMovieManager2.common;
 using WpfMovieManager2.data;
 using WpfMovieManager2.service;
 using WpfMovieManager2Mysql;
@@ -54,6 +55,25 @@ namespace WpfMovieManager2.collection
             FavData newData = service.Export(myFav, new MySqlDbConnection());
 
             listData.Add(newData);
+        }
+
+        public string[] GetMatch(string myActress)
+        {
+            List<string> listMatch = new List<string>();
+
+            foreach(FavData data in listData)
+            {
+                if (data.Label.IndexOf(myActress) >= 0)
+                    listMatch.AddRange(Actress.AppendMatch(data.Label, listMatch));
+
+                if (data.Name.IndexOf(myActress) >= 0)
+                    listMatch.AddRange(Actress.AppendMatch(data.Name, listMatch));
+            }
+
+            if (!listMatch.Exists(x => x == myActress))
+                listMatch.Add(myActress);
+
+            return listMatch.ToArray();
         }
 
         public void Update(FavData myFav)

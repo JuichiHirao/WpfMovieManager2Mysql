@@ -53,6 +53,9 @@ namespace WpfMovieManager2Mysql
 
         public void ParseMedia()
         {
+            if (!Directory.Exists(Path))
+                return;
+
             string[] files = Directory.GetFiles(Path, @Name + "*");
 
             string pathname = System.IO.Path.Combine(Path, Name);

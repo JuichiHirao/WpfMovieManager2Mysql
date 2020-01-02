@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using NLog;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,6 +14,8 @@ namespace WpfMovieManager2Mysql
 {
     public class MySqlDbConnection
     {
+        private static Logger _logger = LogManager.GetCurrentClassLogger();
+
         string settings;
         private MySqlConnection dbcon = null;
         private MySqlTransaction dbtrans = null;
@@ -29,7 +32,7 @@ namespace WpfMovieManager2Mysql
             }
             string json = File.ReadAllText("credential.json");
             var obj = DynamicJson.Parse(json);
-            string database = "", datasource = "", user = "", password = "";
+            string database = "", datasource = "", user = "", password = "", port = "";
             try
             {
                 var targetObj = obj[target];
@@ -43,8 +46,19 @@ namespace WpfMovieManager2Mysql
             {
                 throw new Exception("credential.jsonに存在しない[" + target + "]が指定されました or " + ex.Message);
             }
+            try
+            {
+                var targetObj = obj[target];
 
-            String connectionInfo = "Database=" + database + "; Data Source=" + datasource + ";User Id=" + user + "; Password=" + password + "; ConnectionTimeout=600; DefaultCommandTimeout=600";
+                port = targetObj.port;
+            }
+            catch (RuntimeBinderException ex)
+            {
+                _logger.Warn("portの設定がされていないので、初期3306を使用します");
+                port = "3306";
+            }
+
+            String connectionInfo = "Database=" + database + "; Data Source=" + datasource + "; port=" + port + "; User Id=" + user + "; Password=" + password + "; ConnectionTimeout=600; DefaultCommandTimeout=600";
             dbcon = new MySqlConnection(connectionInfo);
         }
         ~MySqlDbConnection()
