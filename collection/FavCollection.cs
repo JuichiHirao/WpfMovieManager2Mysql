@@ -76,6 +76,25 @@ namespace WpfMovieManager2.collection
             return listMatch.ToArray();
         }
 
+        public bool isOnlyMatch(string myActress)
+        {
+            List<string> listMatch = new List<string>();
+
+            foreach (FavData data in listData)
+            {
+                if (data.Label.IndexOf(myActress) >= 0)
+                    return true;
+
+                if (data.Name.IndexOf(myActress) >= 0)
+                    return true;
+            }
+
+            if (!listMatch.Exists(x => x == myActress))
+                listMatch.Add(myActress);
+
+            return false;
+        }
+
         public void Update(FavData myFav)
         {
             service.Update(myFav, new MySqlDbConnection());

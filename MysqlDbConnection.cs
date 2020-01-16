@@ -22,6 +22,19 @@ namespace WpfMovieManager2Mysql
 
         private MySqlParameter[] parameters;
 
+        // "av", "127.0.0.1", "43306", "root", "mysql"
+        public static string DockerDatabase = "av";
+        public static string DockerDataSource = "127.0.0.1";
+        public static string DockerPort = "43306";
+        public static string DockerUser = "root";
+        public static string DockerPassword = "mysql";
+
+        public MySqlDbConnection(int mode)
+        {
+            String connectionInfo = "Database=" + DockerDatabase + "; Data Source=" + DockerDataSource + "; port=" + DockerPort + "; User Id=" + DockerUser + "; Password=" + DockerPassword + "; ConnectionTimeout=600; DefaultCommandTimeout=600";
+            dbcon = new MySqlConnection(connectionInfo);
+        }
+
         public MySqlDbConnection()
         {
             string target = "mysql";

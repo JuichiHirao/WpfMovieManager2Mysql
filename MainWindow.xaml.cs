@@ -44,6 +44,7 @@ namespace WpfMovieManager2Mysql
         Player Player;
 
         MySqlDbConnection dbcon;
+        MySqlDbConnection dockerMysqlConn = null;
 
         StoreCollection ColViewStore;
         FavCollection ColViewFav;
@@ -79,6 +80,8 @@ namespace WpfMovieManager2Mysql
         {
 
             InitializeComponent();
+
+            dockerMysqlConn = new MySqlDbConnection(0);
 
             dbcon = new MySqlDbConnection();
             Player = new Player();
@@ -2003,6 +2006,10 @@ namespace WpfMovieManager2Mysql
 
             string resultEvaluation = "";
             string evaluation = "";
+            int maxFav = 0;
+            string maxActress = "";
+            bool isFav = false;
+
             if (dispinfoSelectContents.Tag != null && dispinfoSelectContents.Tag.Length > 0)
             {
                 string[] arrActresses = Actress.ParseTag(dispinfoSelectContents.Tag);
@@ -2011,12 +2018,36 @@ namespace WpfMovieManager2Mysql
                     evaluation = "";
                     string[] arrData = ColViewFav.GetMatch(actress);
 
-                    List<MovieContents> matchData = ColViewMovieContents.GetMatchData(arrData);
-                    List<MovieContents> likeData = ColViewMovieContents.GetLikeFilenameData(arrData);
+                    bool isBool = ColViewFav.isOnlyMatch(actress);
+                    if (isBool)
+                        isFav = isBool;
 
-                    var sumEvaluate = matchData.Sum(x => x.Rating);
-                    var unEvaluate = matchData.Where(x => x.Rating == 0).Count();
-                    var maxEvaluate = matchData.Max(x => x.Rating);
+                    List<MovieContents> matchData = ColViewMovieContents.GetMatchData(arrData);
+                    List<MovieContents> likeData = new List<MovieContents>();
+
+                    foreach (MovieContents data in ColViewMovieContents.GetLikeFilenameData(arrData))
+                    {
+                        if (!matchData.Exists(x => x.Id == data.Id))
+                            likeData.Add(data);
+                    }
+
+                    int sumEvaluate = 0, unEvaluate = 0, maxEvaluate = 0;
+
+                    if (matchData.Count > 0)
+                    {
+                        sumEvaluate = matchData.Sum(x => x.Rating);
+                        unEvaluate = matchData.Where(x => x.Rating == 0).Count();
+                        maxEvaluate = matchData.Max(x => x.Rating);
+                    }
+
+                    if (arrActresses.Length > 1)
+                    {
+                        if (maxFav < maxEvaluate)
+                        {
+                            maxFav = maxEvaluate;
+                            maxActress = actress;
+                        }
+                    }
 
                     if (sumEvaluate <= 0 || matchData.Count - unEvaluate <= 0)
                         evaluation = String.Format("全未評価 {0} ({1})", matchData.Count, likeData.Count);
@@ -2025,8 +2056,15 @@ namespace WpfMovieManager2Mysql
 
                     resultEvaluation = String.Format("{0} {1} {2}", resultEvaluation, actress, evaluation);
                 }
+
+                if (arrActresses.Length > 1)
+                    resultEvaluation = String.Format("【{0} Max{1}】{2}", maxActress, maxFav, resultEvaluation);
+
+                if (isFav)
+                    resultEvaluation = "Fav " + resultEvaluation;
+
                 if (arrActresses.Length == 1)
-                    txtStatusBarFileDate.Text = evaluation;
+                    txtStatusBarFileDate.Text = resultEvaluation.Trim();
                 else
                     txtStatusBar.Text = txtStatusBar.Text + " " + resultEvaluation.Trim();
             }

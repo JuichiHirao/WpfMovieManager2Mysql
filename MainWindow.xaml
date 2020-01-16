@@ -39,7 +39,7 @@
             </StatusBarItem>
             <Separator DockPanel.Dock="Right" />
             <StatusBarItem DockPanel.Dock="Right">
-                <TextBox Name="txtStatusBarFileDate" IsReadOnly="True" Height="25" Width="200" TextAlignment="Center" Background="{Binding Background}" />
+                <TextBox Name="txtStatusBarFileDate" IsReadOnly="True" Height="25" Width="350" TextAlignment="Center" Background="{Binding Background}" />
             </StatusBarItem>
             <Separator DockPanel.Dock="Right" />
             <StatusBarItem Name="stsbaritemDispDetail">
