@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,6 +14,7 @@ namespace WpfMovieManager2Mysql
     public class MovieContentsFilterAndSort
     {
         MySqlDbConnection dbcon;
+        MySqlDbConnection dockerMySqlConn;
         public List<MovieContents> listMovieContens;
         public ICollectionView ColViewListMovieContents;
 
@@ -43,13 +45,25 @@ namespace WpfMovieManager2Mysql
         public MovieContentsFilterAndSort()
         {
             dbcon = new MySqlDbConnection();
+            try
+            {
+                dockerMySqlConn = new MySqlDbConnection(0);
+            }
+            catch(Exception e)
+            {
+                Debug.Write(e);
+                dockerMySqlConn = null;
+            }
 
             DataSet();
         }
 
         private void DataSet()
         {
-            listMovieContens = MovieContentsParent.GetDbViewContents(dbcon);
+            if (dockerMySqlConn == null)
+                listMovieContens = MovieContentsParent.GetDbViewContents(dbcon);
+            else
+                listMovieContens = MovieContentsParent.GetDbViewContents(dockerMySqlConn);
 
             ColViewListMovieContents = CollectionViewSource.GetDefaultView(listMovieContens);
         }

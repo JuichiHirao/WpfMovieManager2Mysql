@@ -81,7 +81,16 @@ namespace WpfMovieManager2Mysql
 
             InitializeComponent();
 
-            dockerMysqlConn = new MySqlDbConnection(0);
+            try
+            {
+                dockerMysqlConn = new MySqlDbConnection(0);
+                dockerMysqlConn.openConnection();
+            }
+            catch(Exception ex)
+            {
+                Debug.Write(ex);
+                dockerMysqlConn = null;
+            }
 
             dbcon = new MySqlDbConnection();
             Player = new Player();
@@ -912,6 +921,9 @@ namespace WpfMovieManager2Mysql
                 return;
 
             dispinfoSelectContents.DbUpdateRating(changeRating, dbcon);
+
+            if (dockerMysqlConn != null)
+                dispinfoSelectContents.DbUpdateRating(changeRating, dockerMysqlConn);
         }
 
         private void OnEditEndComment(object sender, RoutedEventArgs e)
@@ -921,7 +933,10 @@ namespace WpfMovieManager2Mysql
             if (dispinfoSelectContents != null && !dispinfoSelectContents.Comment.Equals(textbox.Text))
             {
                 dispinfoSelectContents.Comment = textbox.Text;
+
                 dispinfoSelectContents.DbUpdateComment(textbox.Text, dbcon);
+                if (dockerMysqlConn != null)
+                    dispinfoSelectContents.DbUpdateComment(textbox.Text, dockerMysqlConn);
             }
         }
 
@@ -1367,6 +1382,9 @@ namespace WpfMovieManager2Mysql
         {
             dispinfoSelectContents.DbUpdateTag(txtTag.Text, dbcon);
 
+            if (dockerMysqlConn != null)
+                dispinfoSelectContents.DbUpdateTag(txtTag.Text, dockerMysqlConn);
+
             ScreenDisableBorderTag.Width = 0;
             ScreenDisableBorderTag.Height = 0;
 
@@ -1526,6 +1544,8 @@ namespace WpfMovieManager2Mysql
                 dispinfoSelectContents.RefrectData(dataTarget);
 
                 dispinfoSelectContents.DbUpdate(dbcon);
+                if (dockerMysqlConn != null)
+                    dispinfoSelectContents.DbUpdate(dockerMysqlConn);
             }
 
             if (isSiteDetail)
@@ -2061,10 +2081,13 @@ namespace WpfMovieManager2Mysql
                     resultEvaluation = String.Format("【{0} Max{1}】{2}", maxActress, maxFav, resultEvaluation);
 
                 if (isFav)
+                {
+                    evaluation = "Fav " + resultEvaluation;
                     resultEvaluation = "Fav " + resultEvaluation;
+                }
 
                 if (arrActresses.Length == 1)
-                    txtStatusBarFileDate.Text = resultEvaluation.Trim();
+                    txtStatusBarFileDate.Text = evaluation.Trim();
                 else
                     txtStatusBar.Text = txtStatusBar.Text + " " + resultEvaluation.Trim();
             }
