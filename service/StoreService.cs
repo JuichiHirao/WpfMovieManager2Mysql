@@ -183,6 +183,26 @@ namespace WpfMovieManager2.service
             return data;
         }
 
+        public void UpdateNow(MovieGroupData myMovieGroup, MySqlDbConnection myDbCon)
+        {
+            if (myDbCon == null)
+                myDbCon = new MySqlDbConnection();
+
+            myDbCon.openConnection();
+            string querySting = "UPDATE store SET updated_at = now() WHERE id = @pId";
+
+            List<MySqlParameter> sqlparamList = new List<MySqlParameter>();
+
+            MySqlParameter param = new MySqlParameter("@pId", MySqlDbType.VarChar);
+            param.Value = myMovieGroup.Id;
+            sqlparamList.Add(param);
+
+            myDbCon.SetParameter(sqlparamList.ToArray());
+            myDbCon.execSqlCommand(querySting);
+
+            return;
+        }
+
         public void Update(MovieGroupData myMovieGroup, MySqlDbConnection myDbCon)
         {
             if (myDbCon == null)

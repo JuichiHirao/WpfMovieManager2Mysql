@@ -20,7 +20,7 @@ namespace WpfMovieManager2Mysql
 
         string FilterSearchText = "";
         string FilterLabel = "";
-        string FilterActress = "";
+        string[] FilterActressArray = null;
         string FilterSiteName = "";
 
         public bool IsFilterAv = false;
@@ -72,7 +72,6 @@ namespace WpfMovieManager2Mysql
         {
             FilterSearchText = "";
             FilterLabel = "";
-            FilterActress = "";
             FilterSiteName = "";
 
             //ColViewListMovieContents.Filter = null;
@@ -97,10 +96,11 @@ namespace WpfMovieManager2Mysql
         {
             FilterLabel = myLabel;
         }
-        public void SetActress(string myActress)
+        public void SetActressArray(string[] myActressArray)
         {
-            FilterActress = myActress;
+            FilterActressArray = myActressArray;
         }
+
         public void SetSiteContents(string mySiteName, string myParentPath)
         {
             FilterSiteName = mySiteName;
@@ -116,11 +116,12 @@ namespace WpfMovieManager2Mysql
 
             return infoData;
         }
-        public StoreGroupInfoData ClearAndExecute(FavData myGroupData)
+        // Fav_SelectionChangedからの呼び出し
+        public StoreGroupInfoData ClearAndExecute(string[] myArrayActress)
         {
             Clear();
 
-            SetActress(myGroupData.Label);
+            FilterActressArray = myArrayActress;
 
             StoreGroupInfoData infoData = Execute();
 
@@ -129,22 +130,14 @@ namespace WpfMovieManager2Mysql
 
         public StoreGroupInfoData Execute()
         {
-            string[] manyActress = null;
-            string[] sepa = { "／" };
-
             StoreGroupInfoData infoData = new StoreGroupInfoData();
-
-            if (FilterActress.IndexOf("／") >= 0)
-            {
-                manyActress = FilterActress.Split(sepa, StringSplitOptions.None);
-            }
 
             int TargetMatchCount = 0;
             if (FilterSearchText.Length > 0)
                 TargetMatchCount++;
             if (FilterLabel.Length > 0)
                 TargetMatchCount++;
-            if (FilterActress.Length > 0)
+            if (FilterActressArray != null && FilterActressArray.Length > 0)
                 TargetMatchCount++;
             if (FilterSiteName.Length > 0)
                 TargetMatchCount++;
@@ -192,20 +185,20 @@ namespace WpfMovieManager2Mysql
                         matchCount++;
                 }
 
-                if (FilterActress.Length > 0)
+                if (FilterActressArray != null && FilterActressArray.Length > 0)
                 {
-                    if (manyActress != null)
+                    if (FilterActressArray != null)
                     {
-                        foreach(string actress in manyActress)
+                        foreach(string actress in FilterActressArray)
                         {
                             if (data.Tag.IndexOf(actress) >= 0
                             || data.Name.IndexOf(actress) >= 0)
+                            {
                                 matchCount++;
+                                break;
+                            }
                         }
                     }
-                    else if (data.Tag.IndexOf(FilterActress) >= 0
-                            || data.Name.IndexOf(FilterActress) >= 0)
-                        matchCount++;
                 }
 
                 if (FilterSiteName.Length > 0)

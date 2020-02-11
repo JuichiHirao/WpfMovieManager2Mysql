@@ -23,6 +23,7 @@ using WpfMovieManager2.collection;
 using WpfMovieManager2.data;
 using WpfMovieManager2.common;
 using System.Linq;
+using WpfMovieManager2.service;
 
 namespace WpfMovieManager2Mysql
 {
@@ -436,6 +437,8 @@ namespace WpfMovieManager2Mysql
             if (dispinfoSelectGroup == null)
                 return;
 
+            dispinfoSelectFavData = null;
+
             // 画像表示はクリア
             OnDisplayImage(null, dispinfoSelectGroup);
 
@@ -452,14 +455,32 @@ namespace WpfMovieManager2Mysql
             if (dispinfoSelectFavData == null)
                 return;
 
+            dispinfoSelectGroup = null;
+
             // 画像表示はクリア
             // OnDisplayImage(null, dispinfoSelectFavData);
 
-            // 選択されているグループで表示
-            StoreGroupInfoData filesInfo = ColViewMovieContents.ClearAndExecute(dispinfoSelectFavData);
+            List<string> matchActressList = new List<string>();
+            matchActressList.AddRange(Actress.AppendMatch(dispinfoSelectFavData.Label, matchActressList));
+            matchActressList.AddRange(Actress.AppendMatch(dispinfoSelectFavData.Name, matchActressList));
 
-            this.Title = "未評価 [" + filesInfo.Unrated + "/" + filesInfo.FileCount + "]  Size [" + CommonMethod.GetDisplaySize(filesInfo.Size) + "]";
-            txtbGroupInfo.Text = "未評価 [" + filesInfo.Unrated + "/" + filesInfo.FileCount + "]  Size [" + CommonMethod.GetDisplaySize(filesInfo.Size) + "]";
+            // 選択されているグループで表示
+            StoreGroupInfoData filesInfo = ColViewMovieContents.ClearAndExecute(matchActressList.ToArray());
+
+            if (dockerMysqlConn != null)
+            {
+                AvContentsService service = new AvContentsService();
+                string evaluation = Actress.GetEvaluation(matchActressList.ToArray(), service, dockerMysqlConn, 1);
+
+                //txtStatusBar.Text = evaluation;
+                txtbGroupInfo.Text = evaluation + " Size [" + CommonMethod.GetDisplaySize(filesInfo.Size) + "]";
+            }
+            else
+            {
+                txtStatusBar.Text = "docker接続なし";
+                txtbGroupInfo.Text = "docker接続なし";
+            }
+
         }
 
         private void txtSearchGroup_TextChanged(object sender, TextChangedEventArgs e)
@@ -921,9 +942,31 @@ namespace WpfMovieManager2Mysql
                 return;
 
             dispinfoSelectContents.DbUpdateRating(changeRating, dbcon);
+            UpdateNowStoreOrFav(dispinfoSelectContents, dbcon);
 
             if (dockerMysqlConn != null)
+            {
                 dispinfoSelectContents.DbUpdateRating(changeRating, dockerMysqlConn);
+                UpdateNowStoreOrFav(dispinfoSelectContents, dockerMysqlConn);
+            }
+        }
+
+        private void UpdateNowStoreOrFav(MovieContents myMovieContents, MySqlDbConnection myDbCon)
+        {
+            if (dispinfoSelectFavData != null)
+            {
+                FavService service = new FavService();
+                service.UpdateNow(dispinfoSelectFavData, myDbCon);
+            }
+            else
+            {
+                MovieGroupData storeData = ColViewStore.GetMatchLabel(myMovieContents.StoreLabel);
+                if (storeData != null)
+                {
+                    StoreService service = new StoreService();
+                    service.UpdateNow(ColViewStore.GetMatchLabel(myMovieContents.StoreLabel), myDbCon);
+                }
+            }
         }
 
         private void OnEditEndComment(object sender, RoutedEventArgs e)
@@ -1733,14 +1776,14 @@ namespace WpfMovieManager2Mysql
             Binding bgbinding = null;
             if (selValue == "NotRated")
             {
-                RatingRowColorConverter rowColorConverter = new RatingRowColorConverter();
-                bgbinding = new Binding("Rating") { Converter = rowColorConverter };
-                //style.Setters.Add(new Setter(ListBoxItem.HorizontalContentAlignmentProperty, HorizontalAlignment.Stretch));
+                RowColorConverter rowColorConverter = new RowColorConverter();
+                bgbinding = new Binding("Type") { Converter = rowColorConverter };
             }
             else
             {
-                RowColorConverter rowColorConverter = new RowColorConverter();
-                bgbinding = new Binding("Kind") { Converter = rowColorConverter };
+                RatingRowColorConverter rowColorConverter = new RatingRowColorConverter();
+                bgbinding = new Binding("Rating") { Converter = rowColorConverter };
+                //style.Setters.Add(new Setter(ListBoxItem.HorizontalContentAlignmentProperty, HorizontalAlignment.Stretch));
             }
 
             style.Setters.Add(new Setter(DataGridRow.BackgroundProperty, bgbinding));
@@ -2024,72 +2067,16 @@ namespace WpfMovieManager2Mysql
             if (dispinfoSelectContents == null)
                 return;
 
-            string resultEvaluation = "";
-            string evaluation = "";
-            int maxFav = 0;
-            string maxActress = "";
-            bool isFav = false;
-
             if (dispinfoSelectContents.Tag != null && dispinfoSelectContents.Tag.Length > 0)
             {
-                string[] arrActresses = Actress.ParseTag(dispinfoSelectContents.Tag);
-                foreach(string actress in arrActresses)
-                {
-                    evaluation = "";
-                    string[] arrData = ColViewFav.GetMatch(actress);
+                AvContentsService service = new AvContentsService();
+                string[] arrayActress = Actress.ParseTag(dispinfoSelectContents.Tag);
+                string evaluation = Actress.GetEvaluation(dispinfoSelectContents.Tag, service, dockerMysqlConn, 2);
 
-                    bool isBool = ColViewFav.isOnlyMatch(actress);
-                    if (isBool)
-                        isFav = isBool;
-
-                    List<MovieContents> matchData = ColViewMovieContents.GetMatchData(arrData);
-                    List<MovieContents> likeData = new List<MovieContents>();
-
-                    foreach (MovieContents data in ColViewMovieContents.GetLikeFilenameData(arrData))
-                    {
-                        if (!matchData.Exists(x => x.Id == data.Id))
-                            likeData.Add(data);
-                    }
-
-                    int sumEvaluate = 0, unEvaluate = 0, maxEvaluate = 0;
-
-                    if (matchData.Count > 0)
-                    {
-                        sumEvaluate = matchData.Sum(x => x.Rating);
-                        unEvaluate = matchData.Where(x => x.Rating == 0).Count();
-                        maxEvaluate = matchData.Max(x => x.Rating);
-                    }
-
-                    if (arrActresses.Length > 1)
-                    {
-                        if (maxFav < maxEvaluate)
-                        {
-                            maxFav = maxEvaluate;
-                            maxActress = actress;
-                        }
-                    }
-
-                    if (sumEvaluate <= 0 || matchData.Count - unEvaluate <= 0)
-                        evaluation = String.Format("全未評価 {0} ({1})", matchData.Count, likeData.Count);
-                    else
-                        evaluation = String.Format("未 {0}/全 {1} Max {2} Avg {3} ({4})", unEvaluate, matchData.Count, maxEvaluate, sumEvaluate / (matchData.Count - unEvaluate), likeData.Count);
-
-                    resultEvaluation = String.Format("{0} {1} {2}", resultEvaluation, actress, evaluation);
-                }
-
-                if (arrActresses.Length > 1)
-                    resultEvaluation = String.Format("【{0} Max{1}】{2}", maxActress, maxFav, resultEvaluation);
-
-                if (isFav)
-                {
-                    evaluation = "Fav " + resultEvaluation;
-                    resultEvaluation = "Fav " + resultEvaluation;
-                }
-
-                if (arrActresses.Length == 1)
+                if (arrayActress.Length == 1)
                     txtStatusBarFileDate.Text = evaluation.Trim();
                 else
-                    txtStatusBar.Text = txtStatusBar.Text + " " + resultEvaluation.Trim();
+                    txtStatusBar.Text = txtStatusBar.Text + " " + evaluation.Trim();
             }
         }
 

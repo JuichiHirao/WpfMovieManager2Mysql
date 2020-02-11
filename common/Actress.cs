@@ -4,6 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using WpfMovieManager2.data;
+using WpfMovieManager2.service;
+using WpfMovieManager2Mysql;
 
 namespace WpfMovieManager2.common
 {
@@ -96,6 +99,113 @@ namespace WpfMovieManager2.common
 
             return true;
         }
+        internal static string GetEvaluation(string[] myArrayActress, AvContentsService contentsService, MySqlDbConnection dockerMysqlConn, int myMode)
+        {
+            // myMode 1: Favでの選択時、1人で別名モード 2: 複数含むモード
+            bool isFav = false;
+            string resultEvaluation = "", evaluation = "";
+            int maxFav = 0;
+            string maxActress = "";
 
+            int totalTaget = 0;
+            int totalTagetLike = 0;
+            int totalSumEvaluate = 0;
+            int totalUnEvaluate = 0;
+            int totalMaxEvaluate = 0;
+
+            foreach (string actress in myArrayActress)
+            {
+                string[] arrFavActress = contentsService.GetFavoriteActresses(actress, dockerMysqlConn);
+
+                List<AvContentsData> avContentsList = new List<AvContentsData>();
+                List<AvContentsData> avContentsFilenameLikeList = new List<AvContentsData>();
+                if (arrFavActress.Length >= 1 && myMode != 1)
+                {
+                    isFav = true;
+                    foreach (string favActress in arrFavActress)
+                    {
+                        List<AvContentsData> list = contentsService.GetActressList(actress, dockerMysqlConn);
+
+                        foreach (AvContentsData data in list)
+                        {
+                            if (!avContentsList.Exists(x => x.Id == data.Id))
+                                avContentsList.Add(data);
+                        }
+                    }
+                }
+                else
+                {
+                    avContentsList = contentsService.GetActressList("%" + actress + "%", dockerMysqlConn);
+                    avContentsFilenameLikeList = contentsService.GetActressLikeFilenameList("%" + actress + "%", dockerMysqlConn, avContentsList);
+                }
+
+                int sumEvaluate = 0, unEvaluate = 0, maxEvaluate = 0;
+
+                if (avContentsList.Count > 0)
+                {
+                    sumEvaluate = avContentsList.Sum(x => x.Rating);
+                    unEvaluate = avContentsList.Where(x => x.Rating == 0).Count();
+                    maxEvaluate = avContentsList.Max(x => x.Rating);
+                }
+
+                if (myArrayActress.Length > 1)
+                {
+                    if (maxFav < maxEvaluate)
+                    {
+                        maxFav = maxEvaluate;
+                        maxActress = actress;
+                    }
+                }
+
+                if (myMode == 1)
+                {
+                    totalTagetLike += avContentsFilenameLikeList.Count;
+                    totalTaget += avContentsList.Count;
+                    totalSumEvaluate += sumEvaluate;
+                    totalUnEvaluate += unEvaluate;
+                    if (totalMaxEvaluate < maxEvaluate)
+                        totalMaxEvaluate = maxEvaluate;
+                }
+                else
+                {
+                    if (sumEvaluate <= 0 || avContentsList.Count - unEvaluate <= 0)
+                        evaluation = String.Format("全未評価 {0} ({1})", avContentsList.Count, avContentsFilenameLikeList.Count);
+                    else
+                        evaluation = String.Format("未 {0}/全 {1} Max {2} Avg {3} ({4})", unEvaluate, avContentsList.Count, maxEvaluate, sumEvaluate / (avContentsList.Count - unEvaluate), avContentsFilenameLikeList.Count);
+
+                    if (myArrayActress.Length > 1)
+                        resultEvaluation = String.Format("{0} {1} {2}", resultEvaluation, actress, evaluation);
+                    else
+                        resultEvaluation = evaluation;
+                }
+            }
+
+            if (myMode == 1)
+            {
+                if (totalSumEvaluate <= 0 || totalTaget - totalUnEvaluate <= 0)
+                    resultEvaluation = String.Format("全未評価 {0} ({1})", totalTaget, totalTagetLike);
+                else
+                    resultEvaluation = String.Format("未 {0}/全 {1} Max {2} Avg {3} ({4})", totalUnEvaluate, totalTaget, totalMaxEvaluate, totalSumEvaluate / (totalTaget - totalUnEvaluate), totalTagetLike);
+            }
+            else
+            {
+                if (myArrayActress.Length > 1)
+                    resultEvaluation = String.Format("【{0} Max{1}】{2}", maxActress, maxFav, resultEvaluation);
+
+                if (isFav)
+                    resultEvaluation = "Fav " + resultEvaluation;
+            }
+
+
+            return resultEvaluation;
+
+        }
+
+        internal static string GetEvaluation(string myTag, AvContentsService contentsService, MySqlDbConnection dockerMysqlConn, int myMode)
+        {
+            string[] arrActresses = common.Actress.ParseTag(myTag);
+
+            return Actress.GetEvaluation(arrActresses, contentsService, dockerMysqlConn, myMode);
+        }
     }
 }

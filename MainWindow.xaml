@@ -67,7 +67,7 @@
                 <ToggleButton Content="M" Width="50" Height="50" Margin="5,5,5,5" FontSize="36" /> <!-- MAKERS -->
                 <ToggleButton Content="C" Width="50" Height="50" Margin="5,5,5,5" FontSize="36" /> <!-- CATEGORY -->
             </WrapPanel>
-            <TextBlock Name="txtbGroupInfo" Margin="0,3,5,0" HorizontalAlignment="Right" VerticalAlignment="Top" FontSize="36" Grid.ColumnSpan="5" />
+            <TextBlock Name="txtbGroupInfo" Margin="0,3,5,0" HorizontalAlignment="Right" VerticalAlignment="Top" FontSize="24" Grid.ColumnSpan="5" />
             <Button Name="btnCloseImageContents" Style="{StaticResource CircleCloseButton}" Width="30" Height="30" Margin="0,0,3,-40" HorizontalAlignment="Right" VerticalAlignment="Bottom" Panel.ZIndex="9" Grid.ColumnSpan="5" Click="OnCloseImageContents" />
             <Grid Name="lgriDataGriddControl" Grid.Column="1" Grid.ColumnSpan="4">
                 <Grid.ColumnDefinitions>

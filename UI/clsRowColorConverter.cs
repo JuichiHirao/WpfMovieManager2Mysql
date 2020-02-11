@@ -16,16 +16,18 @@ namespace WpfMovieManager2Mysql
         {
             string strValue = value.ToString();
             //Debug.Print("strValue" + strValue);
-            if (strValue.Equals("1"))
+            if (strValue.Equals("file"))
                 return new LinearGradientBrush(Colors.Cornsilk, Colors.Cornsilk, 45);
-            if (strValue.Equals("2"))
+            if (strValue.Equals("site"))
                 return new LinearGradientBrush(Colors.Honeydew, Colors.Honeydew, 45);
+            /*
             if (strValue.Equals("3"))
                 return new LinearGradientBrush(Colors.White, Colors.White, 45);
             if (strValue.Equals("11"))
                 return new LinearGradientBrush(Colors.OrangeRed, Colors.White, 45);
             if (strValue.Equals("12"))
                 return new LinearGradientBrush(Colors.PaleVioletRed, Colors.White, 45);
+             */
 
             return new LinearGradientBrush(Colors.Pink, Colors.White, 45);
         }
@@ -44,9 +46,21 @@ namespace WpfMovieManager2Mysql
             
             //Debug.Print("strValue" + strValue);
             if (rating == 0)
+                return new LinearGradientBrush(Colors.White, Colors.White, 45);
+            if (rating == 4 || rating == 3 || rating == 2 || rating == 1)
+                return new LinearGradientBrush(Colors.White, Colors.Gainsboro, 45);
+            if (rating == 5)
+                return new LinearGradientBrush(Colors.White, Colors.Linen, 45);
+            if (rating == 6)
+                return new LinearGradientBrush(Colors.White, Colors.Honeydew, 45);
+            if (rating == 7)
                 return new LinearGradientBrush(Colors.White, Colors.PaleGreen, 45);
-            if (rating >= 8)
-                return new LinearGradientBrush(Colors.White, Colors.LightGoldenrodYellow, 45);
+            if (rating == 8)
+                return new LinearGradientBrush(Colors.White, Colors.LawnGreen, 45);
+            if (rating == 9)
+                return new LinearGradientBrush(Colors.White, Colors.SpringGreen, 45);
+            if (rating == 10)
+                return new LinearGradientBrush(Colors.White, Colors.Coral, 45);
 
             return new LinearGradientBrush(Colors.White, Colors.White, 45);
         }

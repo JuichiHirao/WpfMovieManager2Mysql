@@ -177,6 +177,26 @@ namespace WpfMovieManager2.service
             return data;
         }
 
+        public void UpdateNow(FavData myFav, MySqlDbConnection myDbCon)
+        {
+            if (myDbCon == null)
+                myDbCon = new MySqlDbConnection();
+
+            myDbCon.openConnection();
+            string querySting = "UPDATE fav SET updated_at = now() WHERE id = @pId";
+
+            List<MySqlParameter> sqlparamList = new List<MySqlParameter>();
+
+            MySqlParameter param = new MySqlParameter("@pId", MySqlDbType.VarChar);
+            param.Value = myFav.Id;
+            sqlparamList.Add(param);
+
+            myDbCon.SetParameter(sqlparamList.ToArray());
+            myDbCon.execSqlCommand(querySting);
+
+            return;
+        }
+
         public void Update(FavData myFav, MySqlDbConnection myDbCon)
         {
             if (myDbCon == null)

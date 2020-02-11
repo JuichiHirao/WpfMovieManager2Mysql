@@ -31,6 +31,12 @@ namespace WpfMovieManager2.collection
 
             listData = service.GetList(new MySqlDbConnection());
             ColViewListData = CollectionViewSource.GetDefaultView(listData);
+
+            if (ColViewListData != null && ColViewListData.CanSort == true)
+            {
+                ColViewListData.SortDescriptions.Clear();
+                ColViewListData.SortDescriptions.Add(new SortDescription("UpdatedAt", ListSortDirection.Descending));
+            }
         }
 
         public MovieGroupData GetMatchLabel(string myLabel)

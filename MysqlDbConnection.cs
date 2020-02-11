@@ -29,7 +29,7 @@ namespace WpfMovieManager2Mysql
         public static string DockerUser = "root";
         public static string DockerPassword = "mysql";
 
-        public MySqlDbConnection(int mode)
+        public MySqlDbConnection(int myMode)
         {
             String connectionInfo = "Database=" + DockerDatabase + "; Data Source=" + DockerDataSource + "; port=" + DockerPort + "; User Id=" + DockerUser + "; Password=" + DockerPassword + "; ConnectionTimeout=600; DefaultCommandTimeout=600";
             dbcon = new MySqlConnection(connectionInfo);
@@ -84,6 +84,63 @@ namespace WpfMovieManager2Mysql
             {
                 // 何もしない 2005/11/28の対応を参照
             }
+        }
+
+        public long getLongSql(string myMySqlCommand)
+        {
+            MySqlCommand myCommand;
+            MySqlDataReader myReader;
+
+            long total = 0;
+
+            //dbcon.Open();
+
+            // トランザクションが開始済の場合
+            if (dbtrans == null)
+            {
+                this.openConnection();
+                myCommand = new MySqlCommand(myMySqlCommand, this.getMySqlConnection());
+            }
+            else
+            {
+                myCommand = new MySqlCommand(myMySqlCommand, this.getMySqlConnection());
+                myCommand.Connection = this.getMySqlConnection();
+                myCommand.Transaction = this.dbtrans;
+            }
+            //myCommand = new MySqlCommand( myMySqlCommand, dbcon );
+            if (parameters != null)
+            {
+                for (int IndexParam = 0; IndexParam < parameters.Length; IndexParam++)
+                {
+                    myCommand.Parameters.Add(parameters[IndexParam]);
+                }
+            }
+
+            myReader = myCommand.ExecuteReader();
+
+            if (myReader.Read())
+            {
+                if (myReader.IsDBNull(0))
+                {
+                    parameters = null;
+                    myReader.Close();
+                    throw new NullReferenceException("MySql ERROR");
+                }
+
+                Decimal decimalValue = myReader.GetDecimal(0);
+                total = Convert.ToInt64(decimalValue);
+            }
+            else
+            {
+                parameters = null;
+                myReader.Close();
+                return -1;
+            }
+
+            myReader.Close();
+            parameters = null;
+
+            return total;
         }
 
         public string getDateStringSql(string myMySqlCommand)
