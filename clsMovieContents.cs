@@ -130,7 +130,7 @@ namespace WpfMovieManager2Mysql
 
         public void BackImage()
         {
-            if (ImageList.Count <= 0)
+            if (ImageList == null || ImageList.Count <= 0)
             {
                 if (PackageImage != null && ThumbnailImage == null)
                 {

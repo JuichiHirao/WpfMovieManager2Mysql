@@ -82,10 +82,12 @@ namespace WpfMovieManager2Mysql
 
             InitializeComponent();
 
+            int dockerMaxId = 0;
             try
             {
                 dockerMysqlConn = new MySqlDbConnection(0);
                 dockerMysqlConn.openConnection();
+                dockerMaxId = dockerMysqlConn.getCountSql("SELECT MAX(id) FROM av.contents");
             }
             catch(Exception ex)
             {
@@ -94,6 +96,9 @@ namespace WpfMovieManager2Mysql
             }
 
             dbcon = new MySqlDbConnection();
+            dbcon.openConnection();
+            int maxId = dbcon.getCountSql("SELECT MAX(id) FROM av.contents");
+            this.Title = String.Format("MovieManager2MySql {1} {2}", this.Title, maxId, dockerMaxId);
             Player = new Player();
 
             bgworkerFileDetailCopy = new BackgroundWorker();
@@ -105,7 +110,7 @@ namespace WpfMovieManager2Mysql
         {
             try
             {
-                ColViewMovieContents = new MovieContentsFilterAndSort(dbcon);
+                ColViewMovieContents = new MovieContentsFilterAndSort(dockerMysqlConn);
                 ColViewStore = new StoreCollection();
                 ColViewFav = new FavCollection();
 
@@ -946,8 +951,15 @@ namespace WpfMovieManager2Mysql
 
             if (dockerMysqlConn != null)
             {
-                dispinfoSelectContents.DbUpdateRating(changeRating, dockerMysqlConn);
-                UpdateNowStoreOrFav(dispinfoSelectContents, dockerMysqlConn);
+                try
+                {
+                    dispinfoSelectContents.DbUpdateRating(changeRating, dockerMysqlConn);
+                    UpdateNowStoreOrFav(dispinfoSelectContents, dockerMysqlConn);
+                }
+                catch(Exception ex)
+                {
+                    MessageBox.Show("dockerMysqlConnのDbUpdateRatingで失敗" + ex.Message);
+                }
             }
         }
 
