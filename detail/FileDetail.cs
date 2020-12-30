@@ -17,11 +17,13 @@ namespace WpfMovieManager2Mysql.detail
         public DateTime FileDate = new DateTime(1900, 1, 1);
         public int FileCount = 0;
         public string Extension = "";
+        public string ProductNumber = "";
 
         public FileDetail(MovieContents myMovieContents, MovieGroupData myGroup)
         {
             ExistPath = myMovieContents.Path;
             ContentsName = myMovieContents.Name;
+            ProductNumber = myMovieContents.ProductNumber;
 
             if (ExistPath != null)
                 DataSet(ExistPath, ContentsName + "*");
@@ -29,7 +31,16 @@ namespace WpfMovieManager2Mysql.detail
 
         public override void DataSet(string myPath, string myPattern)
         {
-            string[] fileList = Directory.GetFiles(myPath, myPattern, SearchOption.AllDirectories);
+            string[] fileList;
+            
+            try
+            {
+                fileList = Directory.GetFiles(myPath, myPattern, SearchOption.AllDirectories);
+            }
+            catch(DirectoryNotFoundException ex)
+            {
+                fileList = Directory.GetFiles(myPath, "*" + ProductNumber + "*", SearchOption.AllDirectories);
+            }
 
             ImageCount = 0;
             MovieCount = 0;
@@ -45,12 +56,20 @@ namespace WpfMovieManager2Mysql.detail
 
                 if (regexMov.IsMatch(file))
                 {
+                    bool resultExist = File.Exists(file);
                     FileInfo fileInfo = new FileInfo(file);
                     MovieCount++;
-                    Size += fileInfo.Length;
-                    FileDate = fileInfo.LastWriteTime;
                     FileCount++;
-                    Extension = fileInfo.Extension.Substring(1);
+                    if (fileInfo.Exists)
+                    {
+                        Size += fileInfo.Length;
+                        FileDate = fileInfo.LastWriteTime;
+                        Extension = fileInfo.Extension.Substring(1);
+                    }
+                    else
+                    {
+
+                    }
                 }
                 if (regexJpg.IsMatch(file))
                     ImageCount++;

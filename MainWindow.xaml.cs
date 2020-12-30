@@ -11,18 +11,11 @@ using Microsoft.VisualBasic.FileIO;
 using WpfMovieManager2Mysql.common;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Threading;
-using System.Threading;
-using System.Timers;
-using System.Runtime.InteropServices;
 using System.Windows.Data;
 using System.Text.RegularExpressions;
-using System.Text;
-using WpfMovieManager2Mysql;
 using WpfMovieManager2.collection;
 using WpfMovieManager2.data;
 using WpfMovieManager2.common;
-using System.Linq;
 using WpfMovieManager2.service;
 
 namespace WpfMovieManager2Mysql
@@ -83,6 +76,7 @@ namespace WpfMovieManager2Mysql
             InitializeComponent();
 
             int dockerMaxId = 0;
+            /*
             try
             {
                 dockerMysqlConn = new MySqlDbConnection(0);
@@ -94,6 +88,7 @@ namespace WpfMovieManager2Mysql
                 Debug.Write(ex);
                 dockerMysqlConn = null;
             }
+             */
 
             dbcon = new MySqlDbConnection();
             dbcon.openConnection();
@@ -110,7 +105,11 @@ namespace WpfMovieManager2Mysql
         {
             try
             {
-                ColViewMovieContents = new MovieContentsFilterAndSort(dockerMysqlConn);
+                if (dockerMysqlConn == null)
+                    ColViewMovieContents = new MovieContentsFilterAndSort(dbcon);
+                else
+                    ColViewMovieContents = new MovieContentsFilterAndSort(dockerMysqlConn);
+
                 ColViewStore = new StoreCollection();
                 ColViewFav = new FavCollection();
 
@@ -599,6 +598,9 @@ namespace WpfMovieManager2Mysql
                 txtStatusBarFileLength.Text = CommonMethod.GetDisplaySize(myMovieContents.Size);
                 imagePackage.Source = ImageMethod.GetImageStream(myMovieContents.PackageImage.FullName);
 
+                if (imagePackage.Source == null)
+                    return;
+
                 imageSitesImageOne.Source = ImageMethod.GetImageStream(dispinfoSelectContents.ThumbnailImage.FullName);
                 imageSitesImageOne.ToolTip = dispinfoSelectContents.ThumbnailImage.Name;
                 imageSitesImageTwo.Visibility = Visibility.Collapsed;
@@ -765,7 +767,15 @@ namespace WpfMovieManager2Mysql
             else
                 return;
 
-            dispinfoSelectContents.ParseMedia();
+            try
+            {
+                dispinfoSelectContents.ParseMedia();
+            }
+            catch(DirectoryNotFoundException ex)
+            {
+                Debug.Write(ex);
+                return;
+            }
 
             txtStatusBarFileDate.Text = "";
 
@@ -2081,9 +2091,16 @@ namespace WpfMovieManager2Mysql
 
             if (dispinfoSelectContents.Tag != null && dispinfoSelectContents.Tag.Length > 0)
             {
+                /*
+                if (dockerMysqlConn == null)
+                {
+                    txtStatusBarFileDate.Text = "dockerへのmysql接続が出来ていません";
+                    return;
+                }
+                 */
                 AvContentsService service = new AvContentsService();
                 string[] arrayActress = Actress.ParseTag(dispinfoSelectContents.Tag);
-                string evaluation = Actress.GetEvaluation(dispinfoSelectContents.Tag, service, dockerMysqlConn, 2);
+                string evaluation = Actress.GetEvaluation(dispinfoSelectContents.Tag, service, dbcon, 2);
 
                 if (arrayActress.Length == 1)
                     txtStatusBarFileDate.Text = evaluation.Trim();

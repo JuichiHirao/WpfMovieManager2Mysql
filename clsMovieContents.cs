@@ -11,6 +11,7 @@ using System.Text.RegularExpressions;
 using System.Windows.Media.Imaging;
 using WpfMovieManager2Mysql;
 using MySql.Data.MySqlClient;
+using System.Diagnostics;
 
 namespace WpfMovieManager2Mysql
 {
@@ -56,7 +57,16 @@ namespace WpfMovieManager2Mysql
             if (!Directory.Exists(Path))
                 return;
 
-            string[] files = Directory.GetFiles(Path, @Name + "*");
+            string[] files;
+            
+            try
+            {
+                files = Directory.GetFiles(Path, Name + "*");
+            }
+            catch(DirectoryNotFoundException ex)
+            {
+                files = Directory.GetFiles(Path, "*" + ProductNumber + "*");
+            }
 
             string pathname = System.IO.Path.Combine(Path, Name);
 
