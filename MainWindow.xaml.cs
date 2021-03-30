@@ -1983,19 +1983,32 @@ namespace WpfMovieManager2Mysql
 
         private void OnFilterToggleButtonClick(object sender, RoutedEventArgs e)
         {
-            ColViewMovieContents.IsFilterAv = GetToggleChecked(tbtnFilterAv);
-            ColViewMovieContents.IsFilterIv = GetToggleChecked(tbtnFilterIv);
-            ColViewMovieContents.IsFilterUra = GetToggleChecked(tbtnFilterUra);
-            ColViewMovieContents.IsFilterComment = GetToggleChecked(tbtnFilterComment);
-            ColViewMovieContents.IsFilterTag = GetToggleChecked(tbtnFilterTag);
+            bool IsClear = false;
+            Button btnClear = sender as Button;
+
+            if (btnClear != null)
+                IsClear = true;
+
+            ColViewMovieContents.IsFilterAv = GetToggleChecked(tbtnFilterAv, IsClear);
+            ColViewMovieContents.IsFilterIv = GetToggleChecked(tbtnFilterIv, IsClear);
+            ColViewMovieContents.IsFilterUra = GetToggleChecked(tbtnFilterUra, IsClear);
+            ColViewMovieContents.IsFilterComment = GetToggleChecked(tbtnFilterComment, IsClear);
+            ColViewMovieContents.IsFilterTag = GetToggleChecked(tbtnFilterTag, IsClear);
+            ColViewMovieContents.IsFilterUnRating = GetToggleChecked(tbtnFilterUnRating, IsClear);
 
             ColViewMovieContents.Execute();
         }
 
-        private bool GetToggleChecked(ToggleButton myToggleButton)
+        private bool GetToggleChecked(ToggleButton myToggleButton, bool myIsClear)
         {
             if (myToggleButton == null)
                 return false;
+
+            if (myIsClear)
+            {
+                myToggleButton.IsChecked = false;
+                return false;
+            }
 
             return (bool)myToggleButton.IsChecked;
         }

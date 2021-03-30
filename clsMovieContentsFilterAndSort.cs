@@ -29,6 +29,7 @@ namespace WpfMovieManager2Mysql
         public bool IsFilterComment = false;
         public bool IsFilterTag = false;
         public bool IsFilterGroupCheck = false;
+        public bool IsFilterUnRating = false;
 
         public void AddContents(MovieContents myContents)
         {
@@ -145,7 +146,7 @@ namespace WpfMovieManager2Mysql
             ColViewListMovieContents.Filter = delegate (object o)
             {
                 MovieContents data = o as MovieContents;
-                if (IsFilterAv || IsFilterIv || IsFilterUra || IsFilterComment || IsFilterTag)
+                if (IsFilterAv || IsFilterIv || IsFilterUra || IsFilterComment || IsFilterTag || IsFilterUnRating)
                 {
                     if (IsFilterAv)
                         if (data.Name.IndexOf("[AV") < 0 && data.Name.IndexOf("[DMMR-AV") < 0)
@@ -165,6 +166,10 @@ namespace WpfMovieManager2Mysql
 
                     if (IsFilterTag)
                         if (data.Tag == null || data.Tag.Length <= 0)
+                            return false;
+
+                    if (IsFilterUnRating)
+                        if (data.Rating > 0)
                             return false;
                 }
 

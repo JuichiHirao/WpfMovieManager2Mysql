@@ -108,11 +108,13 @@
                             SelectedValuePath="@Value" 
                             DisplayMemberPath="@DisplayName"
                               SelectionChanged="cmbColor_SelectionChanged"/>
+                    <Button Name="btnFilterClear" Content="Clr" Margin="5,5,5,5" Click="OnFilterToggleButtonClick" /> <!-- Clear -->
                     <ToggleButton Name="tbtnFilterAv" Content="AV" Margin="5,5,5,5" Click="OnFilterToggleButtonClick" /> <!-- AV -->
                     <ToggleButton Name="tbtnFilterIv" Content="IV" Margin="5,5,5,5" Click="OnFilterToggleButtonClick" /> <!-- IV -->
                     <ToggleButton Name="tbtnFilterUra" Content="裏" Margin="5,5,5,5" Click="OnFilterToggleButtonClick" /> <!-- 裏 -->
                     <ToggleButton Name="tbtnFilterComment" Content="Cm" Margin="5,5,5,5" Click="OnFilterToggleButtonClick" /> <!-- Comment有り -->
                     <ToggleButton Name="tbtnFilterTag" Content="Tag" Margin="5,5,5,5" Click="OnFilterToggleButtonClick" /> <!-- タグ -->
+                    <ToggleButton Name="tbtnFilterUnRating" Content="UnR" Margin="5,5,5,5" Click="OnFilterToggleButtonClick" /> <!-- Rating無し -->
                 </WrapPanel>
             </Grid>
             <Grid Name="lgridMovieGroup" Grid.Column="1" Grid.Row="1">
