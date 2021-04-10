@@ -12,11 +12,13 @@ namespace WpfMovieManager2.common
 {
     public class Actress
     {
+        private static Regex regFav = new Regex("Fav[1-9]{0,2}");
+
         /// <summary>
         /// タグに設定された複数の女優名をParseして、複数の女優の配列としてリターン
         /// </summary>
         /// <returns></returns>
-        public static string[] ParseTag(string myTag)
+        public static Tuple<string, string[]> ParseTag(string myTag)
         {
             string[] arrData;
             if (myTag.IndexOf(",") < 0)
@@ -24,20 +26,28 @@ namespace WpfMovieManager2.common
                 arrData = new string[1];
                 arrData[0] = GetActressName(myTag);
 
-                return arrData;
+                return Tuple.Create("", arrData);
             }
 
+            string favInfo = "";
             List<string> listActress = new List<string>();
             arrData = myTag.Split(',');
             foreach (string data in arrData)
             {
+                Match mFav = regFav.Match(data);
+                if (mFav.Success)
+                {
+                    favInfo = mFav.Groups[0].Value;
+                    continue;
+                }
+
                 // 「松ゆきの(2人目)」のような場合に括弧内を消す
                 string act = GetActressName(data);
                 if (act.Trim().Length > 0)
                     listActress.Add(act);
             }
 
-            return listActress.ToArray();
+            return Tuple.Create(favInfo, listActress.ToArray());
         }
 
         public static string GetActressName(string myActressInfo)
@@ -99,10 +109,10 @@ namespace WpfMovieManager2.common
 
             return true;
         }
-        internal static string GetEvaluation(string[] myArrayActress, AvContentsService contentsService, MySqlDbConnection dockerMysqlConn, int myMode)
+        internal static string GetEvaluation(string myFavInfo, string[] myArrayActress, AvContentsService contentsService, MySqlDbConnection dockerMysqlConn, int myMode)
         {
             // myMode 1: Favでの選択時、1人で別名モード 2: 複数含むモード
-            bool isFav = false;
+            string favInfo = "";
             string resultEvaluation = "", evaluation = "";
             int maxFav = 0;
             string maxActress = "";
@@ -113,15 +123,21 @@ namespace WpfMovieManager2.common
             int totalUnEvaluate = 0;
             int totalMaxEvaluate = 0;
 
+            if (myFavInfo.Length > 0)
+                favInfo = "(" + myFavInfo + ")";
+
             foreach (string actress in myArrayActress)
             {
+                if (actress.Trim().Length <= 0)
+                    continue;
+
                 string[] arrFavActress = contentsService.GetFavoriteActresses(actress, dockerMysqlConn);
 
                 List<AvContentsData> avContentsList = new List<AvContentsData>();
                 List<AvContentsData> avContentsFilenameLikeList = new List<AvContentsData>();
                 if (arrFavActress.Length >= 1 && myMode != 1)
                 {
-                    isFav = true;
+                    favInfo = "Fav";
                     foreach (string favActress in arrFavActress)
                     {
                         List<AvContentsData> list = contentsService.GetActressList(actress, dockerMysqlConn);
@@ -192,10 +208,9 @@ namespace WpfMovieManager2.common
                 if (myArrayActress.Length > 1)
                     resultEvaluation = String.Format("【{0} Max{1}】{2}", maxActress, maxFav, resultEvaluation);
 
-                if (isFav)
-                    resultEvaluation = "Fav " + resultEvaluation;
+                if (favInfo.Length > 0)
+                    resultEvaluation = favInfo + " " + resultEvaluation;
             }
-
 
             return resultEvaluation;
 
@@ -203,9 +218,9 @@ namespace WpfMovieManager2.common
 
         internal static string GetEvaluation(string myTag, AvContentsService contentsService, MySqlDbConnection dockerMysqlConn, int myMode)
         {
-            string[] arrActresses = common.Actress.ParseTag(myTag);
+            Tuple<string, string[]> tupleResult = common.Actress.ParseTag(myTag);
 
-            return Actress.GetEvaluation(arrActresses, contentsService, dockerMysqlConn, myMode);
+            return Actress.GetEvaluation(tupleResult.Item1, tupleResult.Item2, contentsService, dockerMysqlConn, myMode);
         }
     }
 }

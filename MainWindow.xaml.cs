@@ -419,6 +419,7 @@ namespace WpfMovieManager2Mysql
 
             if (dispinfoGroupVisibleType == "actress")
             {
+                ColViewFav.FilterClear();
                 ColViewFav.SetSort("UpdatedAt", ListSortDirection.Descending);
                 ColViewFav.SetType(dispinfoGroupVisibleType);
                 dgridGroupFav.Visibility = Visibility.Visible;
@@ -474,7 +475,7 @@ namespace WpfMovieManager2Mysql
             if (dockerMysqlConn != null)
             {
                 AvContentsService service = new AvContentsService();
-                string evaluation = Actress.GetEvaluation(matchActressList.ToArray(), service, dockerMysqlConn, 1);
+                string evaluation = Actress.GetEvaluation("", matchActressList.ToArray(), service, dockerMysqlConn, 1);
 
                 //txtStatusBar.Text = evaluation;
                 txtbGroupInfo.Text = evaluation + " Size [" + CommonMethod.GetDisplaySize(filesInfo.Size) + "]";
@@ -2112,10 +2113,13 @@ namespace WpfMovieManager2Mysql
                 }
                  */
                 AvContentsService service = new AvContentsService();
-                string[] arrayActress = Actress.ParseTag(dispinfoSelectContents.Tag);
+
+                Tuple<string, string[]> tupleResult = Actress.ParseTag(dispinfoSelectContents.Tag);
+
+                //string[] arrayActress = Actress.ParseTag(dispinfoSelectContents.Tag);
                 string evaluation = Actress.GetEvaluation(dispinfoSelectContents.Tag, service, dbcon, 2);
 
-                if (arrayActress.Length == 1)
+                if (tupleResult.Item2.Length == 1)
                     txtStatusBarFileDate.Text = evaluation.Trim();
                 else
                     txtStatusBar.Text = txtStatusBar.Text + " " + evaluation.Trim();
