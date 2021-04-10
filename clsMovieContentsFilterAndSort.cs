@@ -20,6 +20,7 @@ namespace WpfMovieManager2Mysql
 
         string FilterSearchText = "";
         string FilterLabel = "";
+        string FilterLabelLike = "";
         string[] FilterActressArray = null;
         string FilterSiteName = "";
 
@@ -74,6 +75,7 @@ namespace WpfMovieManager2Mysql
             FilterSearchText = "";
             FilterLabel = "";
             FilterSiteName = "";
+            FilterLabelLike = "";
             FilterActressArray = null;
 
             //ColViewListMovieContents.Filter = null;
@@ -98,6 +100,12 @@ namespace WpfMovieManager2Mysql
         {
             FilterLabel = myLabel;
         }
+
+        public void SetLabelLike(string myLabel)
+        {
+            FilterLabelLike = myLabel;
+        }
+
         public void SetActressArray(string[] myActressArray)
         {
             FilterActressArray = myActressArray;
@@ -118,6 +126,29 @@ namespace WpfMovieManager2Mysql
 
             return infoData;
         }
+
+        public StoreGroupInfoData ClearAndExecuteLabelLike(FavData myFavData)
+        {
+            Clear();
+
+            SetLabelLike(myFavData.Comment);
+
+            StoreGroupInfoData infoData = Execute();
+
+            return infoData;
+        }
+
+        public StoreGroupInfoData ClearAndExecuteSearchText(FavData myFavData)
+        {
+            Clear();
+
+            SetSearchText(myFavData.Comment);
+
+            StoreGroupInfoData infoData = Execute();
+
+            return infoData;
+        }
+
         // Fav_SelectionChangedからの呼び出し
         public StoreGroupInfoData ClearAndExecute(string[] myArrayActress)
         {
@@ -138,6 +169,8 @@ namespace WpfMovieManager2Mysql
             if (FilterSearchText.Length > 0)
                 TargetMatchCount++;
             if (FilterLabel.Length > 0)
+                TargetMatchCount++;
+            if (FilterLabelLike.Length > 0)
                 TargetMatchCount++;
             if (FilterActressArray != null && FilterActressArray.Length > 0)
                 TargetMatchCount++;
@@ -188,6 +221,11 @@ namespace WpfMovieManager2Mysql
                 if (FilterLabel.Length > 0)
                 {
                     if (data.StoreLabel.ToUpper() == FilterLabel.ToUpper())
+                        matchCount++;
+                }
+                if (FilterLabelLike.Length > 0)
+                {
+                    if (data.StoreLabel.ToUpper().IndexOf(FilterLabelLike.ToUpper()) >= 0)
                         matchCount++;
                 }
 

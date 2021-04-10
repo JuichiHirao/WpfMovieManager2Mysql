@@ -218,6 +218,16 @@ namespace WpfMovieManager2Mysql
                     else
                         lgridGroupFav.RowDefinitions[1].Height = new GridLength(370);
                 }
+                else if (dispinfoGroupVisibleType == "keyword")
+                {
+                    lgridMovieGroup.Visibility = Visibility.Collapsed;
+                    lgridGroupFav.Visibility = Visibility.Visible;
+
+                    if (!dispinfoIsGroupFavAddVisible)
+                        lgridGroupFav.RowDefinitions[1].Height = new GridLength(0);
+                    else
+                        lgridGroupFav.RowDefinitions[1].Height = new GridLength(370);
+                }
                 else
                 {
                     lgridGroupFav.Visibility = Visibility.Collapsed;
@@ -413,15 +423,20 @@ namespace WpfMovieManager2Mysql
             dispinfoGroupVisibleType = CommonMethod.ToggleButtonType[dispinfoGroupButton];
             dispinfoIsGroupVisible = true;
 
-            ColViewMovieContents.Clear();
             string sortColumns = Convert.ToString(cmbContentsSort.SelectedValue);
             ColViewMovieContents.SetSort(sortColumns, GetSortOrder(btnSortOrder, false));
 
             if (dispinfoGroupVisibleType == "actress")
             {
-                ColViewFav.FilterClear();
                 ColViewFav.SetSort("UpdatedAt", ListSortDirection.Descending);
                 ColViewFav.SetType(dispinfoGroupVisibleType);
+                dgridGroupFav.Visibility = Visibility.Visible;
+                ColViewFav.Execute();
+            }
+            else if (dispinfoGroupVisibleType == "keyword")
+            {
+                ColViewFav.SetSort("UpdatedAt", ListSortDirection.Descending);
+                ColViewFav.SetType("keyword");
                 dgridGroupFav.Visibility = Visibility.Visible;
                 ColViewFav.Execute();
             }
@@ -470,7 +485,17 @@ namespace WpfMovieManager2Mysql
             matchActressList.AddRange(Actress.AppendMatch(dispinfoSelectFavData.Name, matchActressList));
 
             // 選択されているグループで表示
-            StoreGroupInfoData filesInfo = ColViewMovieContents.ClearAndExecute(matchActressList.ToArray());
+            StoreGroupInfoData filesInfo;
+
+            if (dispinfoSelectFavData.Type.Equals("keyword"))
+            {
+                if (dispinfoSelectFavData.Name.Equals("LabelLike"))
+                    filesInfo = ColViewMovieContents.ClearAndExecuteLabelLike(dispinfoSelectFavData);
+                else
+                    filesInfo = ColViewMovieContents.ClearAndExecuteSearchText(dispinfoSelectFavData);
+            }
+            else
+                filesInfo = ColViewMovieContents.ClearAndExecute(matchActressList.ToArray());
 
             if (dockerMysqlConn != null)
             {
@@ -485,6 +510,8 @@ namespace WpfMovieManager2Mysql
                 txtStatusBar.Text = "docker接続なし";
                 txtbGroupInfo.Text = "docker接続なし";
             }
+            this.Title = "未評価 [" + filesInfo.Unrated + "/" + filesInfo.FileCount + "]  Size [" + CommonMethod.GetDisplaySize(filesInfo.Size) + "]";
+            txtbGroupInfo.Text = "未評価 [" + filesInfo.Unrated + "/" + filesInfo.FileCount + "]  Size [" + CommonMethod.GetDisplaySize(filesInfo.Size) + "]";
 
         }
 
@@ -1365,6 +1392,9 @@ namespace WpfMovieManager2Mysql
         private void OnTextFavIdTextChanged(object sender, TextChangedEventArgs e)
         {
             TextBox textbox = sender as TextBox;
+
+            if (dispinfoSelectGroup == null)
+                return;
 
             if (dispinfoSelectFavData == null || textbox.Text.Length <= 0)
             {

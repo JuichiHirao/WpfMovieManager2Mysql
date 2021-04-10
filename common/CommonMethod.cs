@@ -36,7 +36,8 @@ namespace WpfMovieManager2Mysql
         {
             { "D", "file" }, // Directory
             { "S", "site" }, // Site
-            { "A", "actress" }  // Actress
+            { "A", "actress" },  // Actress
+            { "K", "keyword" }  // Favorite Custom
         };
 
         public static long GetLong(string myStrLong)

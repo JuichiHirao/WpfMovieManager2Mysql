@@ -64,6 +64,7 @@
                 <ToggleButton Content="A" Width="50" Height="50" Margin="5,5,5,5" FontSize="36" Click="OnGroupButtonClick" /> <!-- ACTRESS -->
                 <ToggleButton Content="S" Width="50" Height="50" Margin="5,5,5,5" FontSize="36" Click="OnGroupButtonClick" /> <!-- SITE -->
                 <!--<ToggleButton Content="Fa" Width="50" Height="50" Margin="5,5,5,5" FontSize="36" Click="OnGroupButtonClick" /> --> <!-- Favarite -->
+                <ToggleButton Content="K" Width="50" Height="50" Margin="5,5,5,5" FontSize="36" Click="OnGroupButtonClick" /> <!-- Keyword & Custom Condition -->
                 <ToggleButton Content="M" Width="50" Height="50" Margin="5,5,5,5" FontSize="36" /> <!-- MAKERS -->
                 <ToggleButton Content="C" Width="50" Height="50" Margin="5,5,5,5" FontSize="36" /> <!-- CATEGORY -->
             </WrapPanel>
