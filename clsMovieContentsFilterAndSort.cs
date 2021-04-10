@@ -74,6 +74,7 @@ namespace WpfMovieManager2Mysql
             FilterSearchText = "";
             FilterLabel = "";
             FilterSiteName = "";
+            FilterActressArray = null;
 
             //ColViewListMovieContents.Filter = null;
             //ColViewListMovieContents.SortDescriptions.Clear();
